@@ -4,6 +4,14 @@ Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 
 ## [Unreleased]
 
+### P03 — Charges e Pix (2026-08-01)
+
+- payments-core: port `PixProvider` no domínio (I4) com `FakePixProvider` (BR Code EMV gerado com CRC16/CCITT-FALSE real — payload passa em validador) e `PixSandboxAdapter` (`RestClient`, timeout 3s via `spring.http.clients.*`, retry ×3 só em transitório I/O/5xx; 4xx falha direto). Seleção por `PIX_PROVIDER` (`@ConditionalOnProperty`, default `fake`).
+- `POST /charges {invoiceId, rail:PIX}` exige `Idempotency-Key` (400 ProblemDetail sem — I1). Fluxo: insert CREATED em transação própria → provider fora de transação → update PENDING com `provider_ref` e payload JSONB `{emv, providerRef}`. Replay → 200 com a charge original; corrida resolvida capturando violação de `uq_charges_idem`. Fatura inexistente → 404; PAID/CANCELED → 409; BOLETO/CARD → 400 (entram no P09/P10).
+- `GET /charges/{id}` e `GET /invoices/{id}/charges`.
+- payments-core lê `invoices` só via `JdbcClient` (`InvoiceReader`) — entidade continua do billing-core; Flyway é test-scope (schema em runtime é responsabilidade do billing).
+- Testes (15): EMV/CRC com vetor de referência, semântica de retry do adapter com `MockRestServiceServer`, e integração Testcontainers com aceite de corrida — 2 threads, mesma key, UM charge no banco.
+
 ### P02 — Contratos e faturas (2026-08-01)
 
 - `/contracts`: POST (404 se cliente não existe, `billingDay` 1–28, valor com escala 2 e `RoundingMode` explícito — I3), GET com filtro `?clientId=`, GET `{id}`. `ContractResponse` com tudo que card E tabela usam: cliente embutido (nome/documento/tipo), `nextDueDate` calculado, status, criação.
