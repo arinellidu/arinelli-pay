@@ -5,3 +5,6 @@ spring:
     locations: filesystem:../../infra/migrations
     sql-migration-prefix: ""
     sql-migration-separator: "_"
+
+webhook:
+  hmac-secret: test-secret

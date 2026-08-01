@@ -84,6 +84,12 @@ public class Charge {
         this.status = ChargeStatus.PENDING;
     }
 
+    /** PENDING → SETTLED por webhook verificado (I5/I7); nunca por request do front. */
+    public void markSettled(OffsetDateTime when) {
+        this.status = ChargeStatus.SETTLED;
+        this.settledAt = when;
+    }
+
     public Long getId() {
         return id;
     }

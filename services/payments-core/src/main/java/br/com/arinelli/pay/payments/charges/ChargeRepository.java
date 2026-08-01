@@ -9,5 +9,7 @@ public interface ChargeRepository extends JpaRepository<Charge, Long> {
 
     Optional<Charge> findByIdempotencyKey(String idempotencyKey);
 
+    Optional<Charge> findByProviderRef(String providerRef);
+
     List<Charge> findByInvoiceIdOrderById(Long invoiceId);
 }

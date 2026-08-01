@@ -98,7 +98,7 @@ class ChargeApiIntegrationTest {
         firstChargeId = charge.id();
         assertThat(charge.status()).isEqualTo(ChargeStatus.PENDING);
         assertThat(charge.provider()).isEqualTo("fake");
-        assertThat(charge.providerRef()).startsWith("fake-ARINPAY");
+        assertThat(charge.providerRef()).startsWith("ARINPAY");
         assertThat(charge.emv()).startsWith("000201").contains("BR.GOV.BCB.PIX");
         assertThat(charge.invoiceId()).isEqualTo(openInvoiceId);
     }
