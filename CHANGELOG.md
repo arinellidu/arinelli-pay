@@ -4,6 +4,15 @@ Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 
 ## [Unreleased]
 
+### P05 — Gateway (2026-08-01)
+
+- Spring Cloud Gateway 5 (prefixo novo `spring.cloud.gateway.server.webflux.*`): rotas `/api/billing/**` → billing-core e `/api/payments/**` → payments-core (URLs por env `BILLING_CORE_URL`/`PAYMENTS_CORE_URL`), `StripPrefix=2`.
+- I1 na borda: `GlobalFilter` devolve 400 ProblemDetail para mutação em `/api/payments/charges` sem `Idempotency-Key` — sem tocar o backend.
+- `RequestRateLimiter` (Redis reativo, default-filter nas duas rotas): 10 rps, burst 20, chave `X-Client-Id` com fallback IP (`clientKeyResolver`).
+- `X-Request-Id`: gateway gera se ausente (HIGHEST_PRECEDENCE), propaga ao downstream e ecoa na resposta; billing e payments têm `RequestIdFilter` (MDC) + pattern `[rid:%X{requestId}]` — id aparece nos logs dos serviços.
+- Testes (5, Testcontainers Redis + backend fake): StripPrefix, rid gerado/propagado intacto, 400 na borda sem key, passagem com key, 429 após o burst.
+- Live via gateway: fatura gerada → charge (400 sem key na borda) → webhook → **PAID em 1.2s**; rate limit real a 37.6 rps → 28×429/32×200; rid do gateway visível no log do payments.
+
 ### P04 — Webhook Pix + outbox dispatcher Go (2026-08-01)
 
 - `POST /webhooks/pix` (payments-core): corpo lido CRU (`byte[]`), HMAC-SHA256 (`WEBHOOK_HMAC_SECRET`, header `X-Signature`) comparado em tempo constante. Inválida → 401 + registro `signature_ok=false` (corpo não-JSON entra embrulhado em `{"_unparsed"}`). Válida → raw persistido com `dedupe_key=e2eId` ANTES de processar (I5); replay → 200 `duplicate` sem reprocessar (`uq_webhook_dedupe`).
