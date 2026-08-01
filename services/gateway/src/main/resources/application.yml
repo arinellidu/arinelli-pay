@@ -1,0 +1,13 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: gateway
+  # Rotas, filtro de Idempotency-Key e rate limit entram no P05.
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

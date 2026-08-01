@@ -1,0 +1,14 @@
+target/
+build/
+node_modules/
+.next/
+dist/
+.env
+bin/
+*.class
+*.exe
+*.iml
+.idea/
+.vscode/
+.DS_Store
+.env.local

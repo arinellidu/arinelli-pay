@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment: { POSTGRES_DB: pay, POSTGRES_USER: pay, POSTGRES_PASSWORD: pay }
+    ports: ["5433:5432"]  # 5433 no host: 5432 ocupado pelo stack legado arinelli-pay-official
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: ["CMD-SHELL","pg_isready -U pay"], interval: 5s, retries: 10 }
+  redis:
+    image: redis:8-alpine
+    ports: ["6380:6379"]  # 6380 no host: 6379 ocupado pelo stack legado arinelli-pay-official
+    healthcheck: { test: ["CMD","redis-cli","ping"], interval: 5s, retries: 10 }
+  # pix-sandbox:
+  #   image: ghcr.io/arinelliquebec/pix-sandbox:latest
+  #   ports: ["8080:8080"]
+volumes: { pgdata: {} }

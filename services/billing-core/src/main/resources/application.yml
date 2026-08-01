@@ -1,0 +1,26 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: billing-core
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/pay}
+    username: ${SPRING_DATASOURCE_USERNAME:pay}
+    password: ${SPRING_DATASOURCE_PASSWORD:pay}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    # I6: schema só por migration versionada; caminho relativo ao basedir do módulo
+    locations: filesystem:../../infra/migrations
+    # migrations nomeadas NNNN_descricao.sql (sem prefixo V)
+    sql-migration-prefix: ""
+    sql-migration-separator: "_"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
