@@ -4,6 +4,15 @@ Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 
 ## [Unreleased]
 
+### P04 — Webhook Pix + outbox dispatcher Go (2026-08-01)
+
+- `POST /webhooks/pix` (payments-core): corpo lido CRU (`byte[]`), HMAC-SHA256 (`WEBHOOK_HMAC_SECRET`, header `X-Signature`) comparado em tempo constante. Inválida → 401 + registro `signature_ok=false` (corpo não-JSON entra embrulhado em `{"_unparsed"}`). Válida → raw persistido com `dedupe_key=e2eId` ANTES de processar (I5); replay → 200 `duplicate` sem reprocessar (`uq_webhook_dedupe`).
+- MESMA transação (TransactionTemplate — sem proxy self-invocation): charge PENDING→SETTLED + INSERT `outbox_events('charge.settled')` com `{chargeId, invoiceId, e2eId, settledAt}`. Zero chamada externa dentro da transação (I2). Charge desconhecida/status não conclusivo → 200 sem efeito.
+- `GET /invoices/{id}/status` → `{status, paidAt, charge:{rail,status}}` para o polling da UI.
+- Worker Go: dispatcher tick 1s com drain, `FOR UPDATE SKIP LOCKED LIMIT 50`, transação por lote; `charge.settled` → invoice PAID + `paid_at` idempotente (I7); falha por evento → `attempts+1` com backoff exponencial (2^attempts s, cap 300) sem derrubar o lote; slog + graceful shutdown.
+- `FakePixProvider` agora devolve `providerRef = txid` (correlação do webhook por `provider_ref`); payload da charge ganhou `txid`.
+- Testes: 8 de webhook (assinatura inválida ×2, liquidação+outbox atômicos, replay, desconhecida/ignorada, sem e2eId, status consolidado, corpo embrulhado) e Go com Testcontainers — 3 workers concorrentes, 100 eventos, nenhum processado duas vezes + evento venenoso só incrementa attempts. Live: webhook → PAID em 0.6s.
+
 ### P03 — Charges e Pix (2026-08-01)
 
 - payments-core: port `PixProvider` no domínio (I4) com `FakePixProvider` (BR Code EMV gerado com CRC16/CCITT-FALSE real — payload passa em validador) e `PixSandboxAdapter` (`RestClient`, timeout 3s via `spring.http.clients.*`, retry ×3 só em transitório I/O/5xx; 4xx falha direto). Seleção por `PIX_PROVIDER` (`@ConditionalOnProperty`, default `fake`).

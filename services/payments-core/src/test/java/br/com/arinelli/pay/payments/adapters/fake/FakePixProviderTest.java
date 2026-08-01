@@ -30,10 +30,10 @@ class FakePixProviderTest {
     }
 
     @Test
-    void providerRefDeterministicoPorTxid() {
+    void providerRefEhOTxid() {
         var request = new PixChargeRequest("ARINPAY00000002AABBCCDDEEFF0011", new BigDecimal("10.00"), "x");
         assertThat(provider.createCharge(request).providerRef())
-                .isEqualTo("fake-ARINPAY00000002AABBCCDDEEFF0011")
+                .isEqualTo("ARINPAY00000002AABBCCDDEEFF0011")
                 .isEqualTo(provider.createCharge(request).providerRef());
     }
 

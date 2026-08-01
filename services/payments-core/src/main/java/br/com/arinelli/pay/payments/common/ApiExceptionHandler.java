@@ -5,6 +5,8 @@ import br.com.arinelli.pay.payments.charges.ChargeExceptions.InvoiceNotChargeabl
 import br.com.arinelli.pay.payments.charges.ChargeExceptions.InvoiceNotFoundException;
 import br.com.arinelli.pay.payments.charges.ChargeExceptions.UnsupportedRailException;
 import br.com.arinelli.pay.payments.pix.PixProviderException;
+import br.com.arinelli.pay.payments.webhooks.InvalidWebhookPayloadException;
+import br.com.arinelli.pay.payments.webhooks.InvalidWebhookSignatureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -47,6 +49,21 @@ class ApiExceptionHandler {
     ProblemDetail unsupportedRail(UnsupportedRailException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
         problem.setTitle("Trilho não suportado");
+        return problem;
+    }
+
+    /** I5: assinatura inválida → 401; o corpo cru já foi registrado com signature_ok=false. */
+    @ExceptionHandler(InvalidWebhookSignatureException.class)
+    ProblemDetail invalidSignature(InvalidWebhookSignatureException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+        problem.setTitle("Assinatura inválida");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidWebhookPayloadException.class)
+    ProblemDetail invalidWebhookPayload(InvalidWebhookPayloadException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        problem.setTitle("Payload de webhook inválido");
         return problem;
     }
 

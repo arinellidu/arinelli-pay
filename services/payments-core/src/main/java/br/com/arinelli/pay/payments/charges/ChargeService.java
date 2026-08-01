@@ -78,7 +78,8 @@ public class ChargeService {
                 invoice.amount(),
                 "Fatura " + invoice.id() + " — Arinelli Pay"));
 
-        String payload = json.writeValueAsString(new PixPayload(pix.emv(), pix.providerRef()));
+        String payload = json.writeValueAsString(
+                new PixPayload(pix.emv(), pix.providerRef(), txid(charge.getId(), idempotencyKey)));
         tx.executeWithoutResult(status -> {
             Charge managed = charges.findById(charge.getId()).orElseThrow();
             managed.markPending(pix.providerRef(), payload);
@@ -111,7 +112,7 @@ public class ChargeService {
                 charge.getSettledAt());
     }
 
-    record PixPayload(String emv, String providerRef) {
+    record PixPayload(String emv, String providerRef, String txid) {
     }
 
     /** txid alfanumérico estável por charge (26–35 chars, padrão cob Pix). */

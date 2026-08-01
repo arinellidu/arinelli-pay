@@ -52,6 +52,9 @@ func main() {
 		_ = json.NewEncoder(w).Encode(map[string]string{"status": status, "postgres": postgres})
 	})
 
+	dispatcher := &Dispatcher{Pool: pool, Log: logger, Tick: time.Second, BatchSize: 50}
+	go dispatcher.Run(ctx)
+
 	srv := &http.Server{Addr: addr, Handler: mux}
 	go func() {
 		logger.Info("workers up", "addr", addr)

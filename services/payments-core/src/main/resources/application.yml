@@ -17,6 +17,10 @@ spring:
       ddl-auto: validate
     open-in-view: false
 
+# I5: assinatura HMAC-SHA256 sobre o corpo cru dos webhooks
+webhook:
+  hmac-secret: ${WEBHOOK_HMAC_SECRET:change-me}
+
 # I4: seleção de provider por configuração; implementações ficam em adapters/
 pix:
   provider: ${PIX_PROVIDER:fake}          # fake | sandbox (efi entra no P08)

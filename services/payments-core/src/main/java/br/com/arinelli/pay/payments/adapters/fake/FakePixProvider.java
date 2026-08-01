@@ -23,6 +23,7 @@ public class FakePixProvider implements PixProvider {
     @Override
     public PixCharge createCharge(PixChargeRequest request) {
         String emv = BrCodeEmv.payload(PIX_KEY, request.amount(), MERCHANT, CITY, request.txid());
-        return new PixCharge("fake-" + request.txid(), emv);
+        // providerRef = txid, como no sandbox: webhooks correlacionam por provider_ref (P04)
+        return new PixCharge(request.txid(), emv);
     }
 }
