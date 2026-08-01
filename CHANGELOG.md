@@ -4,6 +4,14 @@ Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 
 ## [Unreleased]
 
+### P02 — Contratos e faturas (2026-08-01)
+
+- `/contracts`: POST (404 se cliente não existe, `billingDay` 1–28, valor com escala 2 e `RoundingMode` explícito — I3), GET com filtro `?clientId=`, GET `{id}`. `ContractResponse` com tudo que card E tabela usam: cliente embutido (nome/documento/tipo), `nextDueDate` calculado, status, criação.
+- `POST /contracts/{id}/invoices:generate-next`: gera a próxima fatura OPEN sem scheduler — `DueDateRule` pura (próximo `billing_day`; se passou, mês seguinte; se já existe fatura nesse dia ou depois, um mês após a última não cancelada). Contrato ENDED → 409.
+- `GET /invoices` com filtros `status/clientId/from/to` + `Pageable` (Specification + `@EntityGraph` para evitar N+1; página serializada VIA_DTO: `{content, page:{...}}`).
+- `@Scheduled` diário (`billing.overdue-cron`, default 00:05): OPEN vencida → OVERDUE via update em lote.
+- Testes: 17 casos de borda da `DueDateRule` (dia 28, fevereiro, virada de mês e de ano, sequência longa) + 10 cenários de integração (Testcontainers) — 65 testes verdes no módulo.
+
 ### P01 — Clientes (2026-08-01)
 
 - billing-core: `DocumentValidator` puro (CPF/CNPJ, dígitos verificadores sem lib) com testes de tabela — 6 válidos e 6 inválidos de cada, cobrindo sequências repetidas, DV errado e tamanho errado (30 casos).
