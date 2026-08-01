@@ -4,6 +4,15 @@ Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 
 ## [Unreleased]
 
+### P06 — BFF NestJS (2026-08-01)
+
+- Módulos clients/contracts/invoices/charges consumindo só o gateway (`HttpModule` com baseURL `GATEWAY_URL` e timeout 5s); prefixo global `/bff`, `ValidationPipe` (whitelist) + `ClassSerializerInterceptor`, CORS para o front.
+- `GET /bff/invoices`: DTO de TELA — página do billing + última charge do payments por item (`{client, contract, charge:{rail,status,emv}}`) em uma chamada. `GET /bff/invoices/:id/status` é passthrough SEM cache (polling do P07).
+- `POST /bff/charges` repassa a `Idempotency-Key` do front intacta — nunca gera (I1); 201/200 e erros ProblemDetail do core passam fiéis; upstream fora → 502.
+- Cache 60s handler a handler (`CacheInterceptor`+`CacheTTL`) apenas em leituras.
+- ADR-002 (SQL-first/Flyway) e ADR-003 (BFF fino) escritos — seeds 2 e 3 do DESIGN.md.
+- Testes e2e (8) com gateway mockado em HTTP real: agregação, cache em leitura, polling sem cache, key repassada byte a byte, 400 propagado, validação local sem tocar upstream, escape do `:` na rota generate-next, 502 com upstream morto.
+
 ### P05 — Gateway (2026-08-01)
 
 - Spring Cloud Gateway 5 (prefixo novo `spring.cloud.gateway.server.webflux.*`): rotas `/api/billing/**` → billing-core e `/api/payments/**` → payments-core (URLs por env `BILLING_CORE_URL`/`PAYMENTS_CORE_URL`), `StripPrefix=2`.
