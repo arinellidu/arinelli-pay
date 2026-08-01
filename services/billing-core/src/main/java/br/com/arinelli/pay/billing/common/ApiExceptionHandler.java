@@ -3,11 +3,14 @@ package br.com.arinelli.pay.billing.common;
 import br.com.arinelli.pay.billing.clients.ClientNotFoundException;
 import br.com.arinelli.pay.billing.clients.DuplicateDocumentException;
 import br.com.arinelli.pay.billing.clients.InvalidDocumentException;
+import br.com.arinelli.pay.billing.contracts.ContractEndedException;
+import br.com.arinelli.pay.billing.contracts.ContractNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.stream.Collectors;
 
@@ -29,10 +32,25 @@ class ApiExceptionHandler {
         return problem;
     }
 
-    @ExceptionHandler(ClientNotFoundException.class)
-    ProblemDetail clientNotFound(ClientNotFoundException ex) {
+    @ExceptionHandler({ClientNotFoundException.class, ContractNotFoundException.class})
+    ProblemDetail notFound(RuntimeException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
         problem.setTitle("Recurso não encontrado");
+        return problem;
+    }
+
+    @ExceptionHandler(ContractEndedException.class)
+    ProblemDetail contractEnded(ContractEndedException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Contrato encerrado");
+        return problem;
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    ProblemDetail typeMismatch(MethodArgumentTypeMismatchException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Parâmetro inválido: " + ex.getName());
+        problem.setTitle("Parâmetro inválido");
         return problem;
     }
 
