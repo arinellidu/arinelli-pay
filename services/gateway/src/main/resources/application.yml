@@ -4,7 +4,33 @@ server:
 spring:
   application:
     name: gateway
-  # Rotas, filtro de Idempotency-Key e rate limit entram no P05.
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6380}
+  cloud:
+    gateway:
+      server:
+        webflux:
+          default-filters:
+            # 10 rps com burst 20, chave = X-Client-Id (fallback IP) — clientKeyResolver
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@clientKeyResolver}"
+          routes:
+            - id: billing
+              uri: ${BILLING_CORE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/billing/**
+              filters:
+                - StripPrefix=2
+            - id: payments
+              uri: ${PAYMENTS_CORE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/payments/**
+              filters:
+                - StripPrefix=2
 
 management:
   endpoints:
