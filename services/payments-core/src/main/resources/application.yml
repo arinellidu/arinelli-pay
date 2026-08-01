@@ -4,6 +4,23 @@ server:
 spring:
   application:
     name: payments-core
+  http:
+    clients:
+      connect-timeout: 3s   # provider Pix: timeout curto na borda externa
+      read-timeout: 3s
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/pay}
+    username: ${SPRING_DATASOURCE_USERNAME:pay}
+    password: ${SPRING_DATASOURCE_PASSWORD:pay}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+# I4: seleção de provider por configuração; implementações ficam em adapters/
+pix:
+  provider: ${PIX_PROVIDER:fake}          # fake | sandbox (efi entra no P08)
+  sandbox-url: ${PIX_SANDBOX_URL:http://localhost:8080}
 
 management:
   endpoints:

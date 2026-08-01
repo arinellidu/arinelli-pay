@@ -1,0 +1,7 @@
+# Testes: o schema vem do Flyway apontando para as migrations do repo (I6).
+# Em runtime quem migra é o billing-core; aqui é só para o container efêmero.
+spring:
+  flyway:
+    locations: filesystem:../../infra/migrations
+    sql-migration-prefix: ""
+    sql-migration-separator: "_"
