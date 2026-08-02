@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-01T00:00:00Z",
+  "title": "Design System: Arinelli Pay",
+  "extensions": {
+    "colorMeta": {
+      "paper": { "role": "neutral", "displayName": "Papel", "canonical": "#f5f3ec", "tonalRamp": ["oklch(15% 0.01 95)", "oklch(25% 0.012 95)", "oklch(35% 0.014 95)", "oklch(45% 0.015 95)", "oklch(60% 0.015 95)", "oklch(75% 0.015 95)", "oklch(88% 0.013 95)", "oklch(96% 0.01 95)"] },
+      "paper-deep": { "role": "neutral", "displayName": "Papel Fundo", "canonical": "#ece9df", "tonalRamp": ["oklch(15% 0.012 95)", "oklch(25% 0.014 95)", "oklch(35% 0.016 95)", "oklch(45% 0.018 95)", "oklch(60% 0.018 95)", "oklch(75% 0.018 95)", "oklch(86% 0.016 95)", "oklch(94% 0.013 95)"] },
+      "ink": { "role": "neutral", "displayName": "Tinta", "canonical": "#0a0a0a", "tonalRamp": ["oklch(14% 0 0)", "oklch(24% 0 0)", "oklch(34% 0 0)", "oklch(45% 0 0)", "oklch(56% 0 0)", "oklch(68% 0 0)", "oklch(82% 0 0)", "oklch(95% 0 0)"] },
+      "ink-soft": { "role": "neutral", "displayName": "Tinta Suave", "canonical": "#3d3b36", "tonalRamp": ["oklch(15% 0.008 90)", "oklch(24% 0.009 90)", "oklch(33% 0.01 90)", "oklch(44% 0.01 90)", "oklch(55% 0.01 90)", "oklch(67% 0.009 90)", "oklch(81% 0.008 90)", "oklch(94% 0.006 90)"] },
+      "synth": { "role": "primary", "displayName": "Verde Sintético", "canonical": "#00dc5a", "tonalRamp": ["oklch(20% 0.08 152)", "oklch(32% 0.12 152)", "oklch(44% 0.15 152)", "oklch(55% 0.18 152)", "oklch(66% 0.2 152)", "oklch(78% 0.22 152)", "oklch(87% 0.16 152)", "oklch(95% 0.08 152)"] },
+      "synth-deep": { "role": "primary", "displayName": "Verde Sintético Profundo", "canonical": "#00b249", "tonalRamp": ["oklch(18% 0.07 152)", "oklch(30% 0.11 152)", "oklch(42% 0.14 152)", "oklch(53% 0.17 152)", "oklch(64% 0.19 152)", "oklch(75% 0.2 152)", "oklch(85% 0.15 152)", "oklch(94% 0.07 152)"] },
+      "stamp-paid": { "role": "secondary", "displayName": "Verde Carimbo", "canonical": "#007a33", "tonalRamp": ["oklch(16% 0.06 152)", "oklch(26% 0.09 152)", "oklch(36% 0.11 152)", "oklch(48% 0.13 152)", "oklch(58% 0.13 152)", "oklch(70% 0.12 152)", "oklch(82% 0.1 152)", "oklch(93% 0.06 152)"] },
+      "alarm": { "role": "secondary", "displayName": "Vermelho Alarme", "canonical": "#c42d10", "tonalRamp": ["oklch(18% 0.08 32)", "oklch(28% 0.11 32)", "oklch(38% 0.14 32)", "oklch(50% 0.17 32)", "oklch(60% 0.18 32)", "oklch(70% 0.15 32)", "oklch(82% 0.1 32)", "oklch(93% 0.05 32)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display bitmap (step-64)", "purpose": "A palavra da página (FATURAS, CLIENTES) e o nome do cliente; sobe a 5rem em >=640px. Sempre via .bitmap: Handjet 700, lh 0.92, tracking +0.01em." },
+      "headline": { "displayName": "Headline bitmap (step-48)", "purpose": "O valor em R$ nos specimen-cards — o dado-herói." },
+      "title": { "displayName": "Title bitmap (step-32)", "purpose": "Seções (CONTRATOS), nomes no índice de clientes, títulos de estado vazio. Degraus menores da mesma escada: step-24 (masthead, modal) e step-16 (carimbos, paginação, rodapé)." },
+      "body": { "displayName": "Body", "purpose": "Public Sans 400/500; text-sm dominante, notas <=65ch; tabular-nums global." },
+      "label": { "displayName": "Label", "purpose": "10-11px, 700, tracking 0.14-0.2em, UPPERCASE. Nomeia dado ou controle (FATURA 0001, STATUS, PIX COPIA-E-COLA) — nunca kicker de heading." },
+      "data": { "displayName": "Data (mono)", "purpose": "Só dado: nº zero-padded, valores em célula, CPF/CNPJ, EMV, linha digitável, endpoints. Pilha mono padrão do Tailwind — nenhuma fonte mono própria." }
+    },
+    "motion": [
+      { "name": "stamp-in", "value": "240ms steps(3, end) both — scale 2.2 -> 0.94 -> 1, rotação fixa -6deg, opacity 0 -> 1", "purpose": "Chegada de carimbo em 3 quadros; dispara só quando a liquidação chega do backend (webhook -> polling)." },
+      { "name": "block-blink", "value": "1s steps(1, end) infinite — opacity 1/0 em passo único", "purpose": "Cursor de bloco do processo vivo: ChargeChip PENDENTE e AGUARDANDO PAGAMENTO no modal, enquanto o polling de 3s roda." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão de ação",
+      "kind": "button",
+      "refersTo": "button-action",
+      "description": "A ação de dinheiro — único verde da tela; canto pixelado, hover escurece sem transição.",
+      "html": "<button class=\"ds-btn-action\">COBRAR VIA PIX</button>",
+      "css": ".ds-btn-action { font-family: 'Public Sans', system-ui, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; background: var(--color-synth, #00dc5a); color: var(--color-ink, #0a0a0a); border: none; border-radius: 0; padding: 6px 12px; cursor: pointer; clip-path: polygon(0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)); } .ds-btn-action:hover { background: var(--color-synth-deep, #00b249); } .ds-btn-action:focus-visible { outline: 3px solid var(--color-ink, #0a0a0a); outline-offset: 1px; } .ds-btn-action:disabled { opacity: 0.5; }"
+    },
+    {
+      "name": "Botão contorno",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Ação secundária (VER QR PIX, GERAR PRÓXIMA FATURA); hover inverte para tinta sobre papel.",
+      "html": "<button class=\"ds-btn-outline\">VER QR PIX</button>",
+      "css": ".ds-btn-outline { font-family: 'Public Sans', system-ui, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; background: var(--color-paper, #f5f3ec); color: var(--color-ink, #0a0a0a); border: 2px solid var(--color-ink, #0a0a0a); border-radius: 0; padding: 6px 12px; cursor: pointer; clip-path: polygon(0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)); } .ds-btn-outline:hover { background: var(--color-ink, #0a0a0a); color: var(--color-paper, #f5f3ec); } .ds-btn-outline:focus-visible { outline: 3px solid var(--color-ink, #0a0a0a); outline-offset: 1px; } .ds-btn-outline:disabled { opacity: 0.5; }"
+    },
+    {
+      "name": "Botão filtro",
+      "kind": "button",
+      "refersTo": "button-filter",
+      "description": "Submit de formulário GET (FILTRAR): tinta cheia, hover para tinta suave.",
+      "html": "<button class=\"ds-btn-filter\">FILTRAR</button>",
+      "css": ".ds-btn-filter { font-family: 'Public Sans', system-ui, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; background: var(--color-ink, #0a0a0a); color: var(--color-paper, #f5f3ec); border: none; border-radius: 0; padding: 8px 12px; cursor: pointer; clip-path: polygon(0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)); } .ds-btn-filter:hover { background: var(--color-ink-soft, #3d3b36); } .ds-btn-filter:focus-visible { outline: 3px solid var(--color-ink, #0a0a0a); outline-offset: 1px; }"
+    },
+    {
+      "name": "Carimbos de estado",
+      "kind": "custom",
+      "refersTo": "stamp",
+      "description": "Estado carimbado na diagonal com multiply; PAGA chega em 3 quadros (stamp-in), VENCIDA em tinta de alarme.",
+      "html": "<div class=\"ds-stamp-row\"><span class=\"ds-stamp ds-stamp-paga\">PAGA</span><span class=\"ds-stamp ds-stamp-vencida\">VENCIDA</span><span class=\"ds-stamp ds-stamp-aberta\">ABERTA</span></div>",
+      "css": ".ds-stamp-row { display: flex; gap: 24px; align-items: center; background: var(--color-paper, #f5f3ec); padding: 16px; } .ds-stamp { display: inline-block; font-family: 'Handjet', monospace; font-weight: 700; font-size: 16px; line-height: 1; letter-spacing: 0.01em; padding: 0.1em 0.45em 0.2em; border: 3px solid currentColor; transform: rotate(-6deg); mix-blend-mode: multiply; } .ds-stamp-paga { color: var(--color-stamp-paid, #007a33); animation: ds-stamp-in 240ms steps(3, end) both; } .ds-stamp-vencida { color: var(--color-alarm, #c42d10); } .ds-stamp-aberta { color: var(--color-ink, #0a0a0a); } @keyframes ds-stamp-in { 0% { transform: rotate(-6deg) scale(2.2); opacity: 0; } 60% { transform: rotate(-6deg) scale(0.94); opacity: 1; } 100% { transform: rotate(-6deg) scale(1); opacity: 1; } }"
+    },
+    {
+      "name": "RailChip",
+      "kind": "chip",
+      "refersTo": "chip-rail",
+      "description": "Trilho como vocabulário tipográfico: borda fina, 10px, tracking largo. Mesma receita marca CPF/CNPJ.",
+      "html": "<div class=\"ds-chip-row\"><span class=\"ds-chip-rail\">PIX</span><span class=\"ds-chip-rail\">BOLETO</span><span class=\"ds-chip-rail\">CARD</span></div>",
+      "css": ".ds-chip-row { display: flex; gap: 8px; background: var(--color-paper, #f5f3ec); padding: 12px; } .ds-chip-rail { font-family: 'Public Sans', system-ui, sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.18em; color: var(--color-ink, #0a0a0a); border: 1px solid var(--color-ink, #0a0a0a); padding: 2px 6px; }"
+    },
+    {
+      "name": "ChargeChip pendente",
+      "kind": "chip",
+      "refersTo": "charge-chip",
+      "description": "Estado da cobrança com o cursor de bloco vivo: pisca em steps(1) enquanto o polling de 3s roda.",
+      "html": "<span class=\"ds-charge-chip\"><span class=\"ds-blink\" aria-hidden=\"true\"></span>COBRANÇA PENDENTE</span>",
+      "css": ".ds-charge-chip { display: inline-flex; align-items: center; gap: 6px; font-family: 'Public Sans', system-ui, sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 0.025em; color: var(--color-ink-soft, #3d3b36); background: var(--color-paper, #f5f3ec); padding: 8px; } .ds-blink { display: inline-block; width: 10px; height: 10px; background: var(--color-synth-deep, #00b249); animation: ds-block-blink 1s steps(1, end) infinite; } @keyframes ds-block-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }"
+    },
+    {
+      "name": "ViewToggle",
+      "kind": "nav",
+      "refersTo": "view-toggle",
+      "description": "O gesto nativo do mundo: bitmap alto (CARDS) ⇄ texto fino denso (TABELA); ativo inverte para tinta.",
+      "html": "<div class=\"ds-toggle\" role=\"group\" aria-label=\"Modo de exibição\"><a class=\"ds-toggle-item ds-toggle-active\" href=\"#\" aria-current=\"true\">CARDS</a><a class=\"ds-toggle-item\" href=\"#\">TABELA</a></div>",
+      "css": ".ds-toggle { display: inline-flex; border: 2px solid var(--color-ink, #0a0a0a); background: var(--color-paper, #f5f3ec); } .ds-toggle-item { font-family: 'Public Sans', system-ui, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-decoration: none; color: var(--color-ink, #0a0a0a); background: var(--color-paper, #f5f3ec); padding: 4px 12px; } .ds-toggle-item:hover { background: var(--color-paper-deep, #ece9df); } .ds-toggle-item.ds-toggle-active { background: var(--color-ink, #0a0a0a); color: var(--color-paper, #f5f3ec); } .ds-toggle-item:focus-visible { outline: 3px solid var(--color-ink, #0a0a0a); outline-offset: 1px; }"
+    },
+    {
+      "name": "Campo de filtro",
+      "kind": "input",
+      "refersTo": "filter-field",
+      "description": "Label 10px tracked empilhada sobre controle de borda 2px; formulário GET — o estado cai na querystring.",
+      "html": "<label class=\"ds-field\">STATUS<select class=\"ds-select\"><option>todas</option><option>abertas</option><option>pagas</option><option>vencidas</option></select></label>",
+      "css": ".ds-field { display: inline-flex; flex-direction: column; gap: 4px; font-family: 'Public Sans', system-ui, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.2em; color: var(--color-ink-soft, #3d3b36); background: var(--color-paper, #f5f3ec); padding: 8px; } .ds-select { font-family: 'Public Sans', system-ui, sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.025em; color: var(--color-ink, #0a0a0a); background: var(--color-paper, #f5f3ec); border: 2px solid var(--color-ink, #0a0a0a); border-radius: 0; padding: 6px 8px; } .ds-select:focus-visible { outline: 3px solid var(--color-ink, #0a0a0a); outline-offset: 1px; }"
+    },
+    {
+      "name": "SpecimenHeader",
+      "kind": "custom",
+      "refersTo": "specimen-header",
+      "description": "Assinatura do mundo: a palavra da página em degraus decrescentes até dissolver, fechada por régua pontilhada.",
+      "html": "<div class=\"ds-specimen\"><div class=\"ds-specimen-row\"><span class=\"ds-sp-64\">FATURAS</span><span class=\"ds-sp-32\" aria-hidden=\"true\">FATURAS</span><span class=\"ds-sp-16\" aria-hidden=\"true\">FATURAS</span><span class=\"ds-sp-8\" aria-hidden=\"true\">FATURAS</span></div><div class=\"ds-specimen-rule\"></div></div>",
+      "css": ".ds-specimen { background: var(--color-paper, #f5f3ec); padding: 16px; } .ds-specimen-row { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 16px; } .ds-specimen-row span { font-family: 'Handjet', monospace; font-weight: 700; line-height: 0.92; letter-spacing: 0.01em; } .ds-sp-64 { font-size: 64px; color: var(--color-ink, #0a0a0a); } .ds-sp-32 { font-size: 32px; color: var(--color-ink-soft, #3d3b36); } .ds-sp-16 { font-size: 16px; color: color-mix(in srgb, var(--color-ink-soft, #3d3b36) 70%, transparent); } .ds-sp-8 { font-family: 'Public Sans', system-ui, sans-serif; font-size: 8px; font-weight: 400; letter-spacing: 0.1em; color: color-mix(in srgb, var(--color-ink-soft, #3d3b36) 50%, transparent); } .ds-specimen-rule { margin-top: 16px; border-bottom: 1px dotted color-mix(in srgb, var(--color-ink, #0a0a0a) 45%, transparent); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Emigre bitmap specimen",
+    "overview": "Cobrança como página de specimen tipográfico: o dado de pagamento é a tipografia de catálogo. O valor da fatura é display bitmap gigante sobre papel newsprint; o estado é carimbo de almofada batido na diagonal; a única cor viva é um verde sintético reservado à ação. O mundo recusa explicitamente o dashboard da categoria (sidebar + cards de KPI) — as páginas são índices densos de catálogo, legíveis inteiros em uma tela, com o vocabulário do dinheiro brasileiro (fatura, trilho, vencimento, liquidação) como material de design. Modo da superfície: Operate. Nada aqui é decoração de marketing — cada momento visual corresponde a um evento real do backend: o carimbo PAGA só cai quando o webhook liquida (I7), o bloco verde só pisca enquanto o polling de 3s está vivo. Luz única: color-scheme light; não existe tema escuro.",
+    "keyCharacteristics": [
+      "Papel #F5F3EC + tinta #0A0A0A; UM acento sintético (#00DC5A) só em superfície de ação.",
+      "Display bitmap Handjet 700 em degraus inteiros; texto em Public Sans; mono só para dado.",
+      "Materiais de impressão: régua pontilhada, halftone, canto pixelado, carimbo com multiply.",
+      "Zero sombras, zero border-radius, zero easing suave — movimento só em steps().",
+      "Ícones não existem: os glifos são tipográficos (×, ▲, ▼, ←, →, ✓, ·)."
+    ],
+    "rules": [
+      { "name": "A Regra do Acento Único", "body": "O verde sintético existe só como superfície: fundo de botão de ação, seleção, tarja de hover, bloco vivo do polling. Nunca como cor de texto pequeno sobre papel — estado em texto usa as tintas de carimbo. Se um elemento novo \"precisa\" de cor, a resposta é tinta, papel ou carimbo; nunca um segundo acento.", "section": "colors" },
+      { "name": "A Regra do Degrau", "body": "Display bitmap só nos degraus da escada (16/24/32/48/64, 80 no topo responsivo). Nunca tracking negativo — o bitmap respira com +0.01em.", "section": "typography" },
+      { "name": "A Regra do Mono", "body": "Mono é dado: identificador, valor tabular, documento, EMV, linha digitável. Nunca heading, nunca label, nunca texto corrido.", "section": "typography" },
+      { "name": "A Regra da Prensa", "body": "Profundidade por pressão de tinta (borda, retícula, sobreposição multiply), nunca por luz (sombra, glow, blur).", "section": "elevation" },
+      { "name": "A Regra dos Quadros", "body": "Se não dá para contar em ≤3 quadros, não se move. Nenhum fade, slide ou spring — e nenhuma animação decorativa: mover é afirmar que o sistema fez algo.", "section": "motion" }
+    ],
+    "dos": [
+      "Do reservar o verde synth (#00DC5A) para superfície de ação — um COBRAR por fatura aberta; hover/vida usam synth-deep (#00B249).",
+      "Do usar bitmap só nos degraus (16/24/32/48/64/80) com tracking +0.01em e lh 0.92; dado gigante = step-48, palavra da página = step-64.",
+      "Do dar profundidade por borda (1/2/4px), régua pontilhada, halftone e multiply.",
+      "Do manter movimento em steps() amarrado a evento do backend (stamp-in = liquidou; blink = polling vivo).",
+      "Do manter estado de tela na querystring (?view=, filtros, page) e labels do domínio em PT-BR fixo (PAGA/ABERTA/VENCIDA/CANCELADA; CRIADA/PENDENTE/LIQUIDADA).",
+      "Do mascarar documento, tabular os números (tabular-nums), zero-padded nº (0001) em mono."
+    ],
+    "donts": [
+      "Don't construir sidebar-dashboard, cards de KPI ou \"visão geral\" — as páginas são índices de specimen.",
+      "Don't usar eyebrow/kicker sobre headings; label UPPERCASE tracked existe só nomeando dado ou controle.",
+      "Don't usar mono fora de dado (nº, valor tabular, CPF/CNPJ, EMV, linha digitável, endpoint).",
+      "Don't usar sombra, glow, blur ou border-radius — nenhum existe no código; não introduza o primeiro.",
+      "Don't colocar o acento em texto pequeno sobre papel — texto de estado usa stamp-paid/alarm (4.5:1).",
+      "Don't usar transição suave, fade ou spring; nenhuma animação decorativa.",
+      "Don't simular estado no front (PAID sem webhook) nem importar biblioteca de ícones — glifos são tipográficos.",
+      "Don't criar tema escuro (color-scheme: light é decisão) nem cor nova por trilho ou estado."
+    ]
+  }
+}
