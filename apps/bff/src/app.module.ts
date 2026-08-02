@@ -7,8 +7,13 @@ import { InvoicesModule } from './invoices/invoices.module';
 
 @Module({
   imports: [
-    // cache curto de leitura (60s) — aplicado handler a handler, nunca no polling
-    CacheModule.register({ isGlobal: true, ttl: 60_000 }),
+    // Cache de leitura aplicado handler a handler, nunca no polling.
+    // O default é 5s de propósito: o teto de defasagem da tela é este TTL (o
+    // front já roda force-dynamic + no-store), e num produto que promete
+    // refletir evento real em segundos, esquecer um @CacheTTL tem que falhar
+    // para o lado fresco. Leitura pesada que mereça cache longo declara o valor
+    // explicitamente — essa é a decisão que merece estar escrita.
+    CacheModule.register({ isGlobal: true, ttl: 5_000 }),
     ClientsModule,
     ContractsModule,
     InvoicesModule,

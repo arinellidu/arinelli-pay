@@ -1,246 +1,249 @@
 ---
 name: Arinelli Pay
-description: Cobrança multi-trilho como specimen tipográfico bitmap — papel newsprint, tinta rica, um acento sintético.
+description: Cobrança lida como instrumento de sinal — chassi escuro sob campo de fósforo WebGL, painéis de vidro de cobertura, um acento de fósforo.
 colors:
-  paper: "#f5f3ec"
-  paper-deep: "#ece9df"
-  ink: "#0a0a0a"
-  ink-soft: "#3d3b36"
-  synth: "#00dc5a"
-  synth-deep: "#00b249"
-  stamp-paid: "#007a33"
-  alarm: "#c42d10"
+  chassis: "#07090b"
+  chassis-lift: "#0d1114"
+  signal: "#00dc5a"
+  signal-deep: "#00b249"
+  alert: "#ff6242"
+  warn: "#f2a93b"
+  read: "#e9eeeb"
+  read-soft: "#9aa5a0"
+  read-faint: "#656f6a"
 typography:
   display:
-    fontFamily: "Handjet, monospace"
+    fontFamily: "Archivo, system-ui, sans-serif"
     fontSize: "4rem"
-    fontWeight: 700
-    lineHeight: 0.92
-    letterSpacing: "0.01em"
+    fontWeight: 600
+    lineHeight: 0.95
+    letterSpacing: "-0.02em"
   headline:
-    fontFamily: "Handjet, monospace"
-    fontSize: "3rem"
-    fontWeight: 700
+    fontFamily: "Azeret Mono, ui-monospace, monospace"
+    fontSize: "2.5rem"
+    fontWeight: 500
     lineHeight: 1
-    letterSpacing: "0.01em"
+    letterSpacing: "-0.02em"
   title:
-    fontFamily: "Handjet, monospace"
-    fontSize: "2rem"
-    fontWeight: 700
-    lineHeight: 0.92
-    letterSpacing: "0.01em"
+    fontFamily: "Archivo, system-ui, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 600
+    letterSpacing: "-0.01em"
   body:
-    fontFamily: "Public Sans, system-ui, sans-serif"
+    fontFamily: "Archivo, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: 1.6
   label:
-    fontFamily: "Public Sans, system-ui, sans-serif"
+    fontFamily: "Azeret Mono, ui-monospace, monospace"
     fontSize: "0.625rem"
-    fontWeight: 700
+    fontWeight: 400
     letterSpacing: "0.2em"
   data:
-    fontFamily: "ui-monospace, monospace"
+    fontFamily: "Azeret Mono, ui-monospace, monospace"
     fontSize: "0.75rem"
     fontWeight: 400
+    letterSpacing: "-0.02em"
 components:
-  button-action:
-    backgroundColor: "{colors.synth}"
-    textColor: "{colors.ink}"
-    padding: "6px 12px"
-  button-action-hover:
-    backgroundColor: "{colors.synth-deep}"
-    textColor: "{colors.ink}"
-  button-outline:
-    backgroundColor: "{colors.paper}"
-    textColor: "{colors.ink}"
-    padding: "6px 12px"
-  button-outline-hover:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.paper}"
-  button-filter:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.paper}"
-    padding: "8px 12px"
-  button-filter-hover:
-    backgroundColor: "{colors.ink-soft}"
-    textColor: "{colors.paper}"
-  chip-rail:
-    backgroundColor: "{colors.paper}"
-    textColor: "{colors.ink}"
-    padding: "2px 6px"
+  button-signal:
+    backgroundColor: "{colors.signal}"
+    textColor: "#04150b"
+    padding: "0 10px"
+    borderRadius: "8px"
+  button-signal-hover:
+    backgroundColor: "{colors.signal-deep}"
+    textColor: "#04150b"
+  button-glass:
+    backgroundColor: "rgba(255,255,255,0.06)"
+    textColor: "{colors.read}"
+    padding: "0 10px"
+    borderRadius: "8px"
+  button-glass-hover:
+    backgroundColor: "rgba(255,255,255,0.12)"
+    textColor: "{colors.read}"
+  badge-signal:
+    backgroundColor: "rgba(0,220,90,0.12)"
+    textColor: "{colors.signal}"
+    padding: "0 8px"
+    borderRadius: "5px"
+  badge-alert:
+    backgroundColor: "rgba(255,98,66,0.12)"
+    textColor: "{colors.alert}"
+    padding: "0 8px"
+    borderRadius: "5px"
 ---
 
 # Design System: Arinelli Pay
 
-Verdade do código em `apps/web/src` (tokens em `app/globals.css` via Tailwind 4 `@theme`; contrato de direção no comentário de `app/layout.tsx`). Este arquivo documenta o que está construído — quem for estender (P08–P12: boleto, cartão, extrato, conciliação) estende ISTO, não inventa.
+Verdade do código em `apps/web/src` (tokens em `app/globals.css` via Tailwind 4 `@theme` e `@utility`; contrato de direção no comentário HTML de `app/layout.tsx`). Este arquivo documenta o que está construído — quem for estender (P08–P12: boleto, cartão, extrato, conciliação) estende ISTO.
 
 ## Overview
 
-**Creative North Star: "Emigre bitmap specimen"** (mundo escolhido pelo usuário, seed `ef1cd36a`).
+**Creative North Star: "Instrumento de sinal"** — direção pinada pelo brief do usuário (Tailwind v4 + shadcn/ui + Framer Motion + WebGL + glassmorphism), rendida como aparelho de medição em vez de painel de vidro genérico.
 
-Cobrança como página de specimen tipográfico: o dado de pagamento é a tipografia de catálogo. O valor da fatura é display bitmap gigante sobre papel newsprint; o estado é carimbo de almofada batido na diagonal; a única cor viva é um verde sintético reservado à ação. O mundo recusa explicitamente o dashboard da categoria (sidebar + cards de KPI) — as páginas são índices densos de catálogo, legíveis inteiros em uma tela, com o vocabulário do dinheiro brasileiro (fatura, trilho, vencimento, liquidação) como material de design.
+A tela é a face de um instrumento: um chassi quase preto, um campo de fósforo desenhado em WebGL atrás de tudo, e painéis de **vidro de cobertura** por onde se lê a medição. O vidro só existe porque há sinal atrás para refratar — em fundo chapado ele seria decoração. O campo não é wallpaper: sua amplitude sobe enquanto existe cobrança pendente, cada batida do polling de 3s acende um pulso, e a liquidação confirmada varre a tela uma vez. Movimento é sempre consequência de evento real do backend (I7).
 
-Modo da superfície: **Operate**. Nada aqui é decoração de marketing — cada momento visual corresponde a um evento real do backend: o carimbo PAGA só cai quando o webhook liquida (I7), o bloco verde só pisca enquanto o polling de 3s está vivo. Luz única: `color-scheme: light`; não existe tema escuro.
+Modo da superfície: **Operate**. Densidade e legibilidade vencem expressão; a marca vive na precisão dos detalhes.
 
 **Key Characteristics:**
-- Papel #F5F3EC + tinta #0A0A0A; UM acento sintético (#00DC5A) só em superfície de ação.
-- Display bitmap Handjet 700 em degraus inteiros; texto em Public Sans; mono só para dado.
-- Materiais de impressão: régua pontilhada, halftone, canto pixelado, carimbo com multiply.
-- Zero sombras, zero border-radius, zero easing suave — movimento só em `steps()`.
-- Ícones não existem: os glifos são tipográficos (×, ▲, ▼, ←, →, ✓, ·).
+- Chassi #07090B; UM acento de fósforo (#00DC5A) que, no escuro, pode ser texto.
+- Interface em Archivo; **toda medição em Azeret Mono** (valores, nº, documento, datas de tabela, EMV).
+- Profundidade por luz: blur, aresta de 1px, aro de sombra — não por peso de borda.
+- Ícones desenhados (lucide, traço único). Nenhum glifo Unicode fazendo papel de ícone.
+- Um único momento coreografado: a chegada da liquidação.
 
 ## Colors
 
-Paleta de gráfica: dois papéis, duas tintas, um acento em par claro/escuro e duas tintas de carimbo para estado em texto.
+Estratégia: **Restrained** — chassi + leituras neutras + um acento. O escuro não é preferência de categoria: a cena é um avaliador técnico lendo um painel luminoso, e o vidro precisa de algo brilhante atrás.
 
 ### Primary
-- **Verde Sintético** (`synth` #00DC5A): exclusivamente superfície de ação — fundo dos botões COBRAR VIA PIX e COPIAR CÓDIGO, `::selection`, e tarja de hover sobre texto (nav do masthead, links de cliente, nome no índice — o verde passa por cima como marca-texto).
-- **Verde Sintético Profundo** (`synth-deep` #00B249): hover das superfícies synth e o bloco piscante de processo vivo (`blink-block`) — o único uso do acento em escala pequena, sempre como bloco sólido, nunca como texto.
+- **Fósforo** (`signal` #00DC5A): superfície da ação de dinheiro (`Cobrar via Pix`, `Copiar código`), estado LIQUIDADA/PAGA em texto, lâmpada de atividade, item de nav ativo, foco. Sobre o chassi rende ~11:1 — por isso aqui ele pode ser texto pequeno, ao contrário de um fundo claro.
+- **Fósforo profundo** (`signal-deep` #00B249): hover das superfícies de fósforo.
 
 ### Secondary
-Tintas de carimbo — mais escuras que o acento porque texto pequeno exige contraste 4.5:1 (comentário literal em `globals.css`):
-- **Verde Carimbo** (`stamp-paid` #007A33): texto do carimbo PAGA e do estado LIQUIDADA no modal.
-- **Vermelho Alarme** (`alarm` #C42D10): carimbo VENCIDA, mensagens de erro, hover do × de fechar.
+- **Alerta** (`alert` #FF6242): fatura VENCIDA, erro de mutação, falha de rota. Calibrado mais claro que o vermelho antigo porque vive sobre chassi.
+- **Âmbar** (`warn` #F2A93B): token reservado; ainda sem uso — não invente um segundo acento no lugar dele.
 
 ### Neutral
-- **Papel** (`paper` #F5F3EC): fundo da página e dos componentes; também é o "claro" do QR.
-- **Papel Fundo** (`paper-deep` #ECE9DF): hover de linhas de tabela/lista, fundo do bloco EMV, hover do toggle inativo.
-- **Tinta** (`ink` #0A0A0A): texto, todas as bordas, masthead e botão FILTRAR (fundos pretos), "escuro" do QR, outline de foco.
-- **Tinta Suave** (`ink-soft` #3D3B36): texto secundário, notas, labels de filtro, carimbos neutros (CANCELADA/RASCUNHO), hover do botão FILTRAR.
-- Opacidades de tinta são material, não cor nova: `ink/30` (divisórias internas de card), `ink/40` (bordas tracejadas de vazio, borda do bloco EMV), 45% via `color-mix` (régua pontilhada), `ink/70` (véu do modal).
+- **Chassi** (`chassis` #07090B): fundo do `<html>` e claro do QR invertido. **O `<body>` não pode ter fundo** — o canvas do campo vive em `z-index:-10` e a ordem de pintura do stacking context raiz faria o fundo do body cobri-lo.
+- **Chassi elevado** (`chassis-lift` #0D1114): token de superfície opaca.
+- **Leitura** (`read` #E9EEEB): texto principal; também é a chapa clara do QR.
+- **Leitura suave** (`read-soft` #9AA5A0): texto secundário, nota da página, contrato na tabela.
+- **Leitura fraca** (`read-faint` #656F6A): rótulos miúdos, meta de card, unidade `R$`.
+- Opacidades de branco são material, não cor nova: `white/4` (cabeça de tabela, campo de formulário), `white/6` (divisórias internas, hover), `white/8–/12` (bordas de painel), `white/14` (aba ativa do toggle).
 
 ### Named Rules
-**A Regra do Acento Único.** O verde sintético existe só como superfície: fundo de botão de ação, seleção, tarja de hover, bloco vivo do polling. Nunca como cor de texto pequeno sobre papel — estado em texto usa as tintas de carimbo. Se um elemento novo "precisa" de cor, a resposta é tinta, papel ou carimbo; nunca um segundo acento.
+**A Regra do Fósforo.** Um acento só. Ele marca ação de dinheiro, atividade viva e liquidação — nada mais. Estado que não é liquidação usa leitura neutra (ABERTA) ou alerta (VENCIDA). Um trilho novo não ganha cor: ganha etiqueta.
 
 ## Typography
 
-**Display Font:** Handjet 700 (via `next/font/google`, variável `--font-handjet`; fallback `monospace`)
-**Body Font:** Public Sans 400/500/700 (variável `--font-public-sans`; fallback `system-ui, sans-serif`)
-**Data Font:** pilha mono padrão do Tailwind (`font-mono`) — nenhuma fonte mono própria é carregada.
+**Interface:** Archivo variável (`next/font/google`, `--font-archivo`).
+**Medição:** Azeret Mono variável (`--font-azeret`), exposto como `font-mono` e pela utility `.readout` (mono + `tabular-nums` + tracking −0.02em).
 
-**Character:** bitmap de specimen contra grotesca administrativa. O Handjet só existe em 700, sempre via classe `.bitmap` (line-height 0.92, tracking +0.01em); o Public Sans faz todo o resto com `font-variant-numeric: tabular-nums` global no body.
+**Character:** grotesca industrial contra mono técnico. O Archivo carrega o título de página em caixa alta grande; o Azeret Mono carrega tudo que é medida — e é ele que dá o ar de mostrador.
 
 ### Hierarchy
-A escada display usa os tokens `--text-step-*` — degraus inteiros, nunca tamanho intermediário:
-- **Display** (`step-64` = 4rem/64px; sobe a 5rem/80px em ≥sm no h1 do SpecimenHeader): a palavra da página (FATURAS, CLIENTES) e o nome do cliente no detalhe.
-- **Headline** (`step-48` = 3rem/48px): o valor em R$ nos cards de fatura e contrato — o dado-herói.
-- **Title** (`step-32` = 2rem/32px): seções (CONTRATOS), nomes no índice de clientes, título de vazio (NADA POR AQUI).
-- **step-24** (1.5rem/24px): marca ARINELLI PAY no masthead, título PIX e × do modal.
-- **step-16** (1rem/16px): carimbo padrão, PÁG n/m, rodapé PIX · BOLETO · CARTÃO.
-- **step-8** (0.5rem/8px): token definido; o eco final do SpecimenHeader usa `text-[8px]` — é o degrau da dissolução, nada funcional mora nele.
-- **Body** (Public Sans 400/500, `text-sm`/0.875rem dominante; `text-xs` em notas e meta): texto corrido, notas ≤65ch.
-- **Label** (Public Sans 700, 10–11px, tracking 0.14em–0.2em, UPPERCASE): labels de filtro, cabeçalhos de tabela, "FATURA 0001", PIX COPIA-E-COLA. Label nomeia dado ou controle — nunca decora heading (isso seria kicker, proibido).
-- **Data** (`font-mono`, 10–14px): nº com `padStart(4, "0")`, valores em célula de tabela (alinhados à direita), CPF/CNPJ mascarado, EMV, endpoints em `<code>`.
+- **Título de página**: `clamp(2.5rem, 7vw, 4rem)`, 600, lh 0.95, tracking −0.02em, UPPERCASE.
+- **Nome do cliente (detalhe)**: `clamp(2rem, 5.5vw, 3.25rem)`, 600, tracking −0.025em, caixa normal.
+- **Valor-herói**: `.readout` 2.5rem (modal) / 2rem (cards), peso 500.
+- **Seção**: 1.25rem, 600 (Contratos). **Vazio/erro**: 1.5rem, 600.
+- **Corpo**: 0.875rem, lh 1.6, medida ≤68ch.
+- **Rótulo**: `.readout` 10–11px, tracking 0.16–0.2em, UPPERCASE — nomeia dado ou controle.
+- **Dado**: `.readout` 11–14px.
 
 ### Named Rules
-**A Regra do Degrau.** Display bitmap só nos degraus da escada (16/24/32/48/64, 80 no topo responsivo). Nunca tracking negativo — o bitmap respira com +0.01em.
-**A Regra do Mono.** Mono é dado: identificador, valor tabular, documento, EMV, linha digitável. Nunca heading, nunca label, nunca texto corrido.
+**A Regra do Mostrador.** Mono é medição: valor, nº zero-padded, CPF/CNPJ, vencimento em tabela, EMV, rótulo de leitura. Nunca corpo de texto, nunca título de página.
+**A Regra da Unidade.** Valor em dinheiro renderiza por `<Money>`: `R$` a 0.5em em `read-faint`, magnitude em tamanho cheio, `aria-label` com o valor completo. A escala não compete com a medição.
 
 ## Layout
 
-Coluna única `max-w-6xl` (1152px) com `px-4` (`sm:px-6`); sem sidebar. Masthead preto full-bleed (`bg-ink text-paper`, marca bitmap step-24 + nav com tracking 0.12em) seguido de fita `halftone-fine` de 8px — a mesma fita fecha a página sobre o rodapé de `border-t-4`. Main com `py-8`.
+Coluna única `max-w-6xl` (1152px), `px-4`/`sm:px-6`, `main` com `py-10`. Masthead **fixo no topo** (`sticky`) em vidro: é a lente que passa por cima do campo enquanto a página rola — o gesto que prova que o fundo é ao vivo. Rodapé separado por `border-t border-white/8`.
 
-Densidade Operate: o fluxo inteiro legível sem tutorial. Grades de cards: faturas 1/2/3 colunas (`sm`/`lg`), contratos 1/2, `gap-4`. O gesto nativo do mundo é o toggle **CARDS ⇄ TABELA** (bitmap alto ⇄ texto fino denso); todo estado de visão vive na querystring (`?view=`, filtros, `page`) — URLs são compartilháveis, o front não guarda estado de tela. Alinhamento por baseline (`items-baseline`) em masthead, headers e linhas de meta.
+Cabeçalho de página (`page-header.tsx`): título + **régua de leituras** (`ReadoutStrip`) alinhados pela base em ≥sm; no mobile a ordem vira título → nota → régua. Fecha com hairline. A régua carrega estado do instrumento (nesta página, cobranças vivas) — **nunca uma faixa de KPIs**.
 
-Sem filtro de status, a ordenação é acionável: VENCIDA primeiro, depois ABERTA por vencimento, PAGA/CANCELADA por último — o primeiro viewport carrega a urgência e a ação verde.
+Grades: faturas 1/2/3 colunas, contratos 1/2, `gap-4`. Índice de clientes é **uma lista dentro de um único painel**, não N cards. Todo estado de tela vive na querystring (`?view=`, filtros, `page`).
+
+Sem filtro de status, a ordenação é acionável: vencidas, depois abertas por vencimento, pagas/canceladas por último.
 
 ## Elevation & Depth
 
-**Não existe sombra** — zero `box-shadow`/`shadow-*` no código. Profundidade é linguagem de prensa: peso de borda (1px chips e réguas · 2px moldura padrão · 4px pesado: separadores do masthead/rodapé, cabeça de tabela, painel do modal), fita de halftone nas bordas de página, régua pontilhada entre linhas, painel `paper-deep` para rebaixar dado bruto (EMV), e `mix-blend-mode: multiply` nos carimbos — tinta que se soma ao papel, não flutua sobre ele. O modal não "eleva": é um painel de `border-4` sobre véu `ink/70`.
+Profundidade é ótica, não tipográfica. Duas receitas em `globals.css`:
+
+- **`.glass`** (painéis, régua de filtros, toggle, listas, tabela): gradiente branco 8%→2% **sobre base `rgb(7 9 11 / 62%)`**, `backdrop-filter: blur(20px) saturate(1.4)`, borda `white/9`, e três sombras — aresta de luz `inset 0 1px 0 white/14`, aro `inset 0 -1px 0 black/35` e queda `0 18px 40px -26px black/90`. A base escura é obrigatória: sem ela a banda de fósforo atravessa o painel e o texto perde contraste exatamente onde o sinal é mais forte.
+- **`.glass-deep`** (o painel de cobrança): gradiente opaco #161B1F→#0C1013, `blur(28px) saturate(1.5)`, aro mais duro, queda `0 40px 90px -30px`.
+- **`.edge-signal`**: substitui a aresta por fósforo enquanto a cobrança daquele painel está PENDENTE.
+- Véu do modal: `bg-chassis/72` + `backdrop-blur-md` — escuro o bastante para o painel ser a única coisa em foco.
 
 ### Named Rules
-**A Regra da Prensa.** Profundidade por pressão de tinta (borda, retícula, sobreposição multiply), nunca por luz (sombra, glow, blur).
+**A Regra da Lente.** Vidro só onde há sinal atrás. Todo `backdrop-blur` novo precisa de algo estruturado por trás; blur sobre superfície chapada é decoração e não entra.
 
 ## Shapes
 
-Raio zero absoluto — nenhum `border-radius` no app. Cantos são retos ou **pixelados**: `.px-corners` (clip-path de 12 pontos, entalhe de 4px) é a assinatura dos botões de ação. Formas do mundo, todas em `globals.css`:
+Raios de painel de instrumento: `--radius-md: 8px`, `lg: 10px`, `xl: 14px`. Painéis e diálogos usam `rounded-xl`; botões e campos `rounded-lg`; etiquetas de estado `rounded-[5px]` — **nunca pílula**. QR sai numa chapa `bg-read` com `rounded-lg` e sombra própria: a única superfície de papel do aparelho, com módulos #07090B sobre #E9EEEB para leitor real.
 
-- **Régua pontilhada** `.rule-dotted`: border-bottom 1px dotted, tinta a 45% — fecha o SpecimenHeader, separa linhas de tabela/lista e meta de card.
-- **Halftone** `.halftone` (pontos 1px, grade 4px) e `.halftone-fine` (pontos 0.75px a 55%, grade 3px): fita de 8px nas bordas do shell e preenchimento do estado vazio. Material de superfície, nunca atrás de texto corrido.
-- **Carimbo** `.stamp`: borda 3px `currentColor`, padding 0.1em/0.45em/0.2em, `rotate(-6deg)`, multiply — a cor vem toda de `text-*`.
-- **Canto pixelado** `.px-corners`: só em botões (ação, contorno, FILTRAR, copiar). Molduras de card/modal ficam retas.
-- **Sublinhado pontilhado** (`decoration-dotted`): todo link textual (cliente, limpar, ← clientes).
-- **QR honesto** `.pixelated`: `image-rendering: pixelated`, canvas tinta-sobre-papel (#0A0A0A/#F5F3EC) com `border-2`.
-- **Foco e seleção:** `:focus-visible` = outline 3px tinta, offset 1px; `::selection` = fundo synth.
+Foco: `outline: 2px solid var(--color-signal)`, offset 2px. Seleção: fundo fósforo, texto #04150B.
 
 ## Motion
 
-Só `steps()` — não há `transition`, `duration-*` ou curva de easing em lugar nenhum; hover troca de estado instantaneamente, como troca de chapa. Movimento é reservado a evento real do backend:
+Três fontes, todas amarradas a evento:
 
-- **`stamp-in`** (240ms, `steps(3, end)`): chegada de carimbo em 3 quadros — 2.2× → 0.94× → 1×, rotação fixa em −6deg. Dispara quando a liquidação chega (modal PAGA, stamps com `animate`).
-- **`block-blink`** (1s, `steps(1, end)`, infinito): bloco liga/desliga em passo único — o cursor de terminal do polling de 3s. Vive no ChargeChip PENDENTE e no "AGUARDANDO PAGAMENTO" do modal.
+- **Campo WebGL** (`signal-field.tsx`): fragment shader em WebGL2 num triângulo de tela cheia (sem buffers, `gl_VertexID`). Duas ondas somadas formam a linha de base; `u_pending` sobe amplitude e brilho, `u_pulse` acende a cada resposta do polling, `u_settle` varre a diagonal em 1.1s. Piso de ruído por hash. DPR travado em 1.5; **15fps em repouso**, 60 quando há atividade; pausa em `document.hidden`; `prefers-reduced-motion` desenha um quadro estático. Sem WebGL2 o chassi do `<html>` já garante a tela legível.
+- **Lâmpada** (`.lamp`, 1.6s ease-in-out): o único loop de CSS, e só enquanto o polling está de pé.
+- **Selo de liquidação** (Framer Motion, `motion/react`): spring (stiffness 400, damping 24) trazendo o selo PAGA de `scale .72 + blur 8px`, com um anel expandindo em `cubic-bezier(.16,1,.3,1)`; o valor transiciona para fósforo em 0.5s na mesma curva.
 
 ### Named Rules
-**A Regra dos Quadros.** Se não dá para contar em ≤3 quadros, não se move. Nenhum fade, slide ou spring — e nenhuma animação decorativa: mover é afirmar que o sistema fez algo.
+**A Regra do Evento.** Um único momento coreografado — a chegada da liquidação. Fora dele, transições são de estado (hover, foco) e o campo é piso de ruído. Nenhuma animação de entrada em seção, nenhum efeito decorativo.
+**A Regra do Painel Aberto.** Se a fatura liquida com o painel aberto, o `router.refresh()` **espera o fechamento** (`deferredRefresh`): sem isso a lista filtrada some com o card e mata o selo no meio do momento.
 
 ## Components
 
-Todos em `apps/web/src/components/`.
+shadcn/ui (estilo `base-nova`, sobre `@base-ui/react`) é o substrato em `components/ui/`: `button`, `badge`, `dialog`, `select`, `separator`. Os átomos foram comprometidos com o mundo — `buttonVariants` ganhou `signal` e `glass`; `badgeVariants` ganhou `signal`/`alert`/`neutral` e virou retângulo mono; `DialogOverlay` virou o véu do chassi.
 
 ### Buttons
-Três receitas, todas UPPERCASE, `font-bold`, tracking 0.14–0.16em, `disabled:opacity-50`, sem radius:
-- **Ação** (`px-corners bg-synth text-ink px-3 py-1.5 text-xs` → hover `bg-synth-deep`): a ação de dinheiro — COBRAR VIA PIX, COPIAR CÓDIGO (no modal, full-width e `text-sm`). Uma por fatura aberta; é o único verde da tela.
-- **Contorno** (`px-corners border-2 border-ink bg-paper` → hover inverte para `bg-ink text-paper`): ação secundária — VER QR PIX, GERAR PRÓXIMA FATURA (`SubmitButton`, com `pendingLabel` tipo GERANDO…).
-- **Filtro** (`px-corners bg-ink text-paper px-3 py-2` → hover `bg-ink-soft`): FILTRAR — submit de formulário GET.
-- Ação terciária é link com sublinhado pontilhado ("limpar", "ver faturas deste cliente →").
+- **`variant="signal"`**: a ação de dinheiro. Fósforo, `inset 0 1px 0 white/35` (luz de tecla) + queda de fósforo, caixa alta tracking 0.08em. Uma por fatura cobrável.
+- **`variant="glass"`**: ação secundária no material dos painéis — Ver QR Pix, Filtrar, Gerar próxima fatura, Tentar de novo.
+- Ação terciária é link sublinhado (`decoration-white/20`, hover fósforo).
 
-### Chips
-- **RailChip** (`status-stamp.tsx`): borda 1px tinta, 10px, peso 500, tracking 0.18em — PIX/BOLETO/CARD. A mesma receita (com bold) marca CPF/CNPJ nas páginas de cliente. Trilho é vocabulário: BOLETO e CARD já aparecem em chip/filtro mesmo antes de executar.
-- **ChargeChip**: 11px `ink-soft`, "COBRANÇA " + CRIADA/PENDENTE/LIQUIDADA/FALHOU/DEVOLVIDA; quando PENDENTE, precede um quadrado 10px `bg-synth-deep` com `blink-block` — o sinal de vida.
+### Badges / etiquetas
+- **`InvoiceStatus`**: PAGA = `signal`, VENCIDA = `alert`, ABERTA = `outline` com borda `white/18` (leitura neutra — o fósforo fica com quem liquidou), CANCELADA/RASCUNHO = `neutral`.
+- **`RailBadge`**: contorno neutro. PIX/BOLETO/CARD; boleto e cartão já são vocabulário antes de executar.
+- **`ContractStatus`**: Ativo (contorno) / Encerrado (neutral).
+- **`Lamp`**: `live` respira, `on` fica acesa com halo, `off` é piloto apagado.
+- **`ChargeState`**: lâmpada + CRIADA/PENDENTE/LIQUIDADA/FALHOU/DEVOLVIDA; LIQUIDADA em fósforo.
 
-### Cards / Containers
-Specimen-card (`invoice-cards.tsx`, contratos em `clients/[id]/page.tsx`): moldura `border-2 border-ink bg-paper`; cabeçalho com divisória `border-ink/30` (label "FATURA 0001" 11px tracked + carimbo à direita); corpo com o valor em bitmap step-48 e linha de meta fechada por `rule-dotted` (vencimento à esquerda, RailChip à direita); rodapé com ChargeChip à esquerda e a ação à direita. Estado vazio: `border-2 border-dashed border-ink/40` + `halftone-fine`, título bitmap step-32 `ink-soft`, nota ≤48ch.
+### Painéis de fatura (`invoice-cards.tsx`)
+`.glass rounded-xl` em coluna: cabeça (nº em `.readout` + etiqueta de estado) sobre `border-white/8`; corpo com contrato, link do cliente, `<Money>` 2rem e linha de meta (vencimento + RailBadge); rodapé `min-h-[3.25rem]` com ChargeState à esquerda e a ação à direita. Cobrança PENDENTE liga `.edge-signal`.
 
-### Inputs / Fields
-Filtros (`invoices/page.tsx`): label 10px 700 tracking 0.2em `ink-soft` empilhada sobre o controle; select/date `border-2 border-ink bg-paper px-2 py-1.5 text-xs`. Formulário GET puro — o estado cai na querystring. Foco é o global (outline 3px tinta). Erro de mutação: linha `text-xs text-alarm` sob o botão.
+### Tabela (`invoices-table.tsx`)
+TanStack dentro de um `.glass rounded-xl overflow-hidden`. Cabeça `bg-white/4` com `border-b border-white/12`; th-botões `.readout` 10px tracking 0.18em com `ChevronUp`/`ChevronDown`/`ChevronsUpDown` (a coluna VALOR inverte a ordem ícone/rótulo por ser alinhada à direita), `scope="col"` e `aria-sort`. Linhas `border-white/6`, hover `white/4`. Ordenação client-side na página corrente; paginação vem da querystring.
 
-### Navigation
-Masthead: links UPPERCASE `text-sm font-medium` tracking 0.12em, hover = tarja `bg-synth text-ink` (sem transição). **ViewToggle** (`view-toggle.tsx`): grupo `border-2 border-ink`, links `text-xs font-bold` tracking 0.16em; ativo `bg-ink text-paper` + `aria-current`, inativo hover `bg-paper-deep`. Paginação: links com `border-2` que invertem no hover (← ANTERIOR / PRÓXIMA →) ao redor de "PÁG n/m" em bitmap step-16.
+### Filtros (`invoice-filters.tsx`)
+Barra `.glass` que continua sendo **GET nativo** — o estado cai na querystring e o servidor rende a página já filtrada. `Select` do shadcn com `name` (Base UI emite input escondido) e `items` para resolver rótulo; datas em `<input type="date">` nativo (o `color-scheme: dark` faz o seletor do browser acompanhar). Em `<sm` o formulário vive dentro do **FilterFold**: botão de vidro `Filtros` com `aria-expanded`, fechado por padrão.
 
-### SpecimenHeader (assinatura do mundo)
-`specimen-header.tsx` — a palavra da página repetida em degraus decrescentes (step-64/80 → step-32 `ink-soft` → step-16 a 70% → 8px a 50%, ecos `aria-hidden`), nota opcional ≤65ch `text-sm ink-soft`, fechado por `rule-dotted`. Toda página-índice abre com ele; o detalhe de cliente compõe o equivalente à mão (← link, nome em step-64, linha de meta, régua).
+### Painel de cobrança (`pix-charge.tsx`)
+`Dialog` do shadcn com `glass-deep`, `max-h-[92dvh]`, `overflow-x-hidden` (o anel do selo escapa da caixa durante a animação). Cabeça: título `Cobrança Pix` + região `role="status"` com lâmpada e AGUARDANDO PAGAMENTO / LIQUIDADA; empilha no mobile. Corpo: rótulo `Fatura NNNN · Cliente`, `<Money>` 2.5rem com o selo PAGA caindo ao lado, QR na chapa clara, nota, EMV em `<code>` sobre `bg-black/35`, e o botão de fósforo full-width com feedback `Código copiado` (2s) + `role="status"` invisível.
+**O QR é pintado por ref de callback, não por efeito** — o popup do Base UI só entra no DOM depois da transição de abertura, e um `useEffect` rodaria com o canvas ainda nulo.
 
-### InvoiceStamp (estado carimbado)
-`status-stamp.tsx` — `.stamp` + cor por status + label PT-BR de `lib/format.ts`. Tamanhos: step-16 nos cards, `text-[13px]` na tabela. `animate` liga `stamp-in` (usar só quando o estado ACABOU de chegar do backend, não em render de lista).
+### Masthead / navegação
+Barra fixa em vidro (receita inline, sem `.glass`, para não brigar com a borda). Marca desenhada: onda dentro de um aro arredondado, `currentColor` em fósforo. Nav em caixa alta com sublinhado de fósforo no item ativo (`aria-current`). **ViewToggle**: grupo `.glass` com `LayoutGrid`/`Rows3`; ativo `bg-white/14` com aresta de luz.
 
-### InvoicesTable
-`invoices-table.tsx` (TanStack): cabeça `border-b-4 border-ink`, th-botões 11px 700 tracking 0.18em UPPERCASE com glifos ▲/▼; linhas `rule-dotted` com hover `paper-deep`; nº e valor em mono (valor à direita); ordenação client-side na página corrente, paginação vem da querystring (o front não decide página de dados).
-
-### PixModal
-`pix-charge.tsx` — véu `bg-ink/70`, painel `max-w-sm border-4 border-ink bg-paper`; cabeçalho `border-b-4`: PIX em bitmap step-24, centro = estado vivo (blink + AGUARDANDO PAGAMENTO) ou carimbo PAGA com `stamp-in`, × em bitmap com hover `alarm`; corpo: QR `pixelated`, nota, label PIX COPIA-E-COLA, EMV em `<code>` mono 10px sobre `paper-deep` (borda `ink/40`, `max-h-20`, `break-all`), botão verde full-width com feedback COPIADO ✓ (2s). Fecha por Esc e clique no véu.
+### Estados de sistema
+`loading.tsx` (lâmpada + "Lendo o sistema", `role="status"`), `error.tsx` ("Sem sinal do BFF" em alerta, mensagem em `.readout` sobre `bg-black/35`, botão de vidro Tentar de novo), `not-found.tsx` ("Fora de escala"). Vazios de listagem usam painel `.glass` com título 1.5rem e nota ≤52ch; filtro de trilho futuro vira "Trilho em preparo" afirmando o roadmap.
 
 ### Estados do domínio (vocabulário fixo)
-Labels em `lib/format.ts`; moeda `Intl` pt-BR BRL; datas dd/mm/aaaa; documentos mascarados (`documentMask`).
-- **Fatura**: PAGA (`stamp-paid`) · ABERTA (`ink`) · VENCIDA (`alarm`) · CANCELADA/RASCUNHO (`ink-soft`). Contrato: ATIVO (`ink`) / ENCERRADO (`ink-soft/60`), mesmo `.stamp`.
-- **Cobrança**: CRIADA → PENDENTE (blink-block + polling 3s) → LIQUIDADA; desvios FALHOU/DEVOLVIDA. PENDENTE é o único estado com movimento contínuo.
-- **PAGA só nasce de evento**: o front faz polling e `router.refresh()`; nunca seta PAID por conta própria (I7). O `stamp-in` marca exatamente essa chegada.
-- Ação de cobrança só é renderizada para ABERTA/VENCIDA sem pagamento; a Idempotency-Key nasce no client (uuid) e o replay devolve o resultado original (I1).
+Labels em `lib/format.ts`; moeda `Intl` pt-BR BRL; datas dd/mm/aaaa; documentos mascarados.
+- **Fatura**: PAGA · ABERTA · VENCIDA · CANCELADA/RASCUNHO.
+- **Cobrança**: CRIADA → PENDENTE (lâmpada + polling 3s) → LIQUIDADA; desvios FALHOU/DEVOLVIDA.
+- **PAGA só nasce de evento**: o front faz polling e `router.refresh()`; nunca seta PAID por conta própria (I7). A Idempotency-Key nasce no client (uuid) e o replay devolve o resultado original (I1).
+
+## Barramento de sinal (`lib/signal.ts`)
+
+`holdPending()` (devolve release), `announcePoll()`, `announceSettlement()`, `subscribeSignal()`. São `CustomEvent`s em `window` — sem provider, sem contexto. É o contrato entre o que o backend responde e o que o campo desenha; qualquer trilho novo (boleto, cartão) deve emitir os mesmos três sinais em vez de inventar animação própria.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** reservar o verde synth (#00DC5A) para superfície de ação — um COBRAR por fatura aberta; hover/vida usam synth-deep (#00B249).
-- **Do** usar bitmap só nos degraus (16/24/32/48/64/80) com tracking +0.01em e lh 0.92; dado gigante = step-48, palavra da página = step-64.
-- **Do** dar profundidade por borda (1/2/4px), régua pontilhada, halftone e multiply.
-- **Do** manter movimento em `steps()` amarrado a evento do backend (stamp-in = liquidou; blink = polling vivo).
-- **Do** manter estado de tela na querystring (`?view=`, filtros, page) e labels do domínio em PT-BR fixo (PAGA/ABERTA/VENCIDA/CANCELADA; CRIADA/PENDENTE/LIQUIDADA).
-- **Do** mascarar documento, tabular os números (`tabular-nums`), zero-padded nº (0001) em mono.
+- **Do** reservar o fósforo para ação de dinheiro, atividade viva e liquidação.
+- **Do** passar toda medição por `.readout` / `<Money>` e manter `tabular-nums`.
+- **Do** dar profundidade por blur + aresta de luz + aro de sombra, com base escura sob o vidro.
+- **Do** amarrar movimento a evento: `holdPending` / `announcePoll` / `announceSettlement`.
+- **Do** manter estado de tela na querystring e o formulário de filtros como GET nativo.
+- **Do** usar ícones lucide em traço único; se faltar um, desenhe SVG na mesma gramática.
 
 ### Don't:
-- **Don't** construir sidebar-dashboard, cards de KPI ou "visão geral" — as páginas são índices de specimen.
-- **Don't** usar eyebrow/kicker sobre headings; label UPPERCASE tracked existe só nomeando dado ou controle.
-- **Don't** usar mono fora de dado (nº, valor tabular, CPF/CNPJ, EMV, linha digitável, endpoint).
-- **Don't** usar sombra, glow, blur ou border-radius — nenhum existe no código; não introduza o primeiro.
-- **Don't** colocar o acento em texto pequeno sobre papel — texto de estado usa stamp-paid/alarm (4.5:1).
-- **Don't** usar transição suave, fade ou spring; nenhuma animação decorativa.
-- **Don't** simular estado no front (PAID sem webhook) nem importar biblioteca de ícones — glifos são tipográficos.
-- **Don't** criar tema escuro (`color-scheme: light` é decisão) nem cor nova por trilho ou estado.
+- **Don't** dar fundo ao `<body>` — o campo WebGL fica atrás dele e some.
+- **Don't** usar blur onde não há sinal atrás; vidro decorativo não entra.
+- **Don't** construir sidebar-dashboard, faixa de KPIs ou "visão geral" — a régua de leituras mostra estado do instrumento, não métricas de negócio.
+- **Don't** usar eyebrow/kicker sobre heading, nem gradiente em texto.
+- **Don't** usar mono fora de medição, nem etiqueta em formato de pílula.
+- **Don't** adicionar animação de entrada por seção; o único momento coreografado é a liquidação.
+- **Don't** simular estado no front (PAID sem webhook) nem criar cor nova por trilho ou estado.
+- **Don't** criar tema claro: `color-scheme: dark` é decisão — o vidro depende do campo luminoso.
 
 ## Como estender (P08–P12)
 
-- **Boleto:** linha digitável é dado → bloco `<code>` mono 10px sobre `paper-deep`, receita idêntica ao EMV; a ação continua sendo o único botão verde.
-- **Cartão / novos trilhos:** ganham `RailChip` (BOLETO e CARD já existem como vocabulário) — nunca uma cor nova por trilho.
-- **Extrato bancário:** tabela fina — linhas `rule-dotted`, hover `paper-deep`, valores mono à direita, cabeçalho 11px tracked; não vira grid de cards.
-- **Conciliação:** match confirmado carimba com tinta `stamp-paid`; divergência usa `alarm`; processo rodando é `blink-block` + polling — chegada de resultado é `stamp-in`.
-- Toda página nova abre com `SpecimenHeader` e fecha o primeiro bloco com `rule-dotted`; estados vazios usam a receita tracejada + halftone.
+- **Boleto:** linha digitável é medição → `<code>` `.readout` sobre `bg-black/35`, receita idêntica ao EMV; a ação continua sendo o único botão de fósforo.
+- **Cartão / novos trilhos:** ganham `RailBadge` e emitem os sinais do barramento — nunca uma cor nova.
+- **Extrato bancário:** tabela fina dentro de um `.glass`, valores em `<Money>` à direita, cabeça `bg-white/4`; não vira grade de cards.
+- **Conciliação:** match confirmado carimba em fósforo; divergência em alerta; processo rodando é `holdPending` + lâmpada, e o resultado chega por `announceSettlement`.
+- Toda página nova abre com `PageHeader` e usa a receita `.glass` para vazios.

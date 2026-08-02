@@ -11,10 +11,14 @@ Modo: Operate. Visitante: avaliador técnico em demo de ~3min; persona emprestad
 
 Tarefa: ler carteira (clientes→contratos→faturas), cobrar via Pix, ver liquidação ao vivo (polling 3s) sem reload.
 
-Direção escolhida (usuário, sobre o sorteio): **Specimen Bitmap Emigre** — papel newsprint + tinta rica + um acento sintético verde (#00DC5A); display bitmap (Handjet) em degraus inteiros; texto em grotesca fina (Public Sans); halftone/pontilhado como material; botões de canto pixelado; estado como carimbo diagonal. Momento memorável: modal do QR Pix — o QR é o specimen definitivo (pixel real com CRC real) e o carimbo PAGO cai sozinho quando o webhook liquida.
+Direção escolhida (2026-08-02, redesign): **Instrumento de sinal** — o mundo anterior (specimen bitmap Emigre, papel/tinta) foi substituído a pedido do usuário. Chassi escuro sob campo de fósforo em WebGL, painéis de vidro de cobertura, um acento de fósforo #00DC5A; Archivo na interface e Azeret Mono em toda medição; shadcn/ui (base-nova) como substrato de componente; Framer Motion só no momento da liquidação.
 
-Gesto nativo: toggle ?view=cards|table = bitmap alto (cards specimen) ⇄ texto fino denso (tabela TanStack). Filtros/estado na querystring; Server Components na leitura; Idempotency-Key nasce no client (uuid).
+Momento memorável: o painel de cobrança — QR real, e quando o webhook liquida o selo PAGA cai com spring enquanto uma varredura de fósforo atravessa a tela inteira.
 
-Restrições: PT-BR, R$, dd/mm/aaaa; trilhos BOLETO/CARD só vocabulário; nunca simular estado no front (I7). Sem sidebar-dashboard da categoria; sem eyebrow/kicker; mono apenas para EMV/dados.
+Regra que nasceu do build: o campo WebGL é acionado por eventos reais via `lib/signal.ts` (`holdPending` / `announcePoll` / `announceSettlement`). Nenhum trilho novo inventa animação própria — emite os mesmos três sinais.
 
-Não resolvido: GIF do README gravado no aceite; boleto/cartão entram P09/P10.
+Gesto nativo: toggle ?view=cards|table (painéis de vidro ⇄ tabela densa). Filtros/estado na querystring com GET nativo; Server Components na leitura; Idempotency-Key nasce no client (uuid).
+
+Restrições: PT-BR, R$, dd/mm/aaaa; trilhos BOLETO/CARD só vocabulário; nunca simular estado no front (I7); `<body>` não pode ter fundo (o canvas do campo fica em z-index -10).
+
+Não resolvido: o GIF do README ainda está gravado no mundo antigo (specimen bitmap) — precisa ser regravado. Boleto/cartão entram P09/P10.

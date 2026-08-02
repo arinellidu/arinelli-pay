@@ -5,7 +5,7 @@ import { createHmac } from "node:crypto";
  * Demo loop completo do README, gravado em vídeo:
  * cliente → contrato → fatura → Cobrar via Pix → QR → pagamento simulado
  * (webhook HMAC — é o simulador de pagamento que existe no ambiente com o
- * provider fake) → worker Go liquida → carimbo PAGA sem reload.
+ * provider fake) → worker Go liquida → selo PAGA sem reload.
  *
  * Pré-requisito: stack local inteira de pé (compose + billing/payments/
  * gateway + bff + web + worker). O spec cria dados novos a cada rodada
@@ -34,7 +34,10 @@ function sign(body: string): string {
   return createHmac("sha256", HMAC_SECRET).update(body).digest("hex");
 }
 
-test("demo: fatura → QR Pix → pagamento simulado → PAGA sem reload", async ({ page, request }) => {
+test("demo: fatura → QR Pix → pagamento simulado → selo PAGA sem reload", async ({
+  page,
+  request,
+}) => {
   // setup via BFF (sem UI de cadastro no v1): cliente novo + contrato + fatura
   const stamp = Date.now().toString().slice(-6);
   const clientResponse = await request.post(`${BFF}/bff/clients`, {
@@ -62,12 +65,12 @@ test("demo: fatura → QR Pix → pagamento simulado → PAGA sem reload", async
 
   // o vídeo começa aqui: carteira do cliente com a fatura ABERTA
   await page.goto(`/invoices?clientId=${client.id}`, { waitUntil: "networkidle" });
-  const card = page.locator("article", { hasText: `FATURA ${invoiceNumber}` });
+  const card = page.locator("article", { hasText: `Fatura ${invoiceNumber}` });
   await expect(card).toBeVisible();
   await page.waitForTimeout(1200);
 
   // Cobrar via Pix — Idempotency-Key nasce no client (uuid)
-  await card.getByRole("button", { name: "COBRAR VIA PIX" }).click();
+  await card.getByRole("button", { name: "Cobrar via Pix" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await expect(dialog.locator("canvas")).toBeVisible(); // QR do EMV real
@@ -89,8 +92,13 @@ test("demo: fatura → QR Pix → pagamento simulado → PAGA sem reload", async
   expect(webhookResponse.status()).toBe(200);
   expect(((await webhookResponse.json()) as { result: string }).result).toBe("processed");
 
-  // fecha o modal; o polling de 3s + worker Go carimbam o card sozinhos
-  await dialog.getByRole("button", { name: "Fechar" }).click();
-  await expect(card.locator(".stamp", { hasText: "PAGA" })).toBeVisible({ timeout: 30_000 });
-  await page.waitForTimeout(2000); // pausa final no carimbo
+  // o polling de 3s traz o estado e o selo cai com o painel ainda aberto
+  await expect(dialog.getByLabel(/^Paga —/)).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(1500);
+
+  // Esc fecha o painel; só então o refresh adiado repinta a lista (se o refresh
+  // rodasse durante a liquidação, o card sairia da listagem e mataria o selo)
+  await page.keyboard.press("Escape");
+  await expect(card.getByText("PAGA", { exact: true })).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(2000); // pausa final na etiqueta
 });

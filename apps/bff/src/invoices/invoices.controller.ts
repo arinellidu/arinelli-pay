@@ -7,7 +7,7 @@ export class InvoicesController {
   constructor(private readonly service: InvoicesService) {}
 
   /** TTL curto de verdade: a lista alimenta o loop cobrar→PAGA — 60s aqui
-      segurava o carimbo do card por até um minuto depois da liquidação. */
+      segurava a etiqueta do card por até um minuto depois da liquidação. */
   @Get()
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(5_000)
