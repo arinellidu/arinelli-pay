@@ -7,120 +7,134 @@ import br.com.arinelli.pay.payments.outbox.OutboxEvent;
 import br.com.arinelli.pay.payments.outbox.OutboxEventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.core.JacksonException;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.OffsetDateTime;
-import java.util.HexFormat;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+/**
+ * Pipeline único de webhook — o mesmo para todo provider (I5, I2, I7). O que varia
+ * por PSP (autenticação e formato do payload) fica no {@link WebhookTranslator}.
+ */
 @Service
 public class WebhookService {
 
-    public enum Result { PROCESSED, DUPLICATE, IGNORED, UNKNOWN_CHARGE }
+    /** Ordem = precedência ao agregar um payload com vários eventos. */
+    public enum Result { PROCESSED, UNKNOWN_CHARGE, DUPLICATE, IGNORED }
 
     private static final Logger log = LoggerFactory.getLogger(WebhookService.class);
-    private static final String PROVIDER = "pix";
 
+    private final Map<String, WebhookTranslator> translators;
     private final WebhookEventRepository webhooks;
     private final ChargeRepository charges;
     private final OutboxEventRepository outbox;
     private final TransactionTemplate tx;
-    private final byte[] secret;
     private final JsonMapper json = JsonMapper.builder().build();
 
-    public WebhookService(WebhookEventRepository webhooks, ChargeRepository charges,
-                          OutboxEventRepository outbox, PlatformTransactionManager txManager,
-                          @Value("${webhook.hmac-secret}") String secret) {
+    public WebhookService(Collection<WebhookTranslator> translators, WebhookEventRepository webhooks,
+                          ChargeRepository charges, OutboxEventRepository outbox,
+                          PlatformTransactionManager txManager) {
+        this.translators = translators.stream()
+                .collect(Collectors.toUnmodifiableMap(WebhookTranslator::provider, Function.identity()));
         this.webhooks = webhooks;
         this.charges = charges;
         this.outbox = outbox;
         this.tx = new TransactionTemplate(txManager);
-        this.secret = secret.getBytes(StandardCharsets.UTF_8);
     }
 
     /**
-     * I5: assinatura HMAC-SHA256 validada sobre o corpo CRU; o payload é
-     * persistido antes de qualquer efeito. I2: transição da charge e INSERT no
-     * outbox acontecem na MESMA transação — zero chamada externa aqui dentro.
+     * I5: autenticação sobre o corpo CRU; payload persistido antes de qualquer efeito.
+     * I2: transição da charge e INSERT no outbox na MESMA transação — zero chamada
+     * externa aqui dentro.
      */
-    public Result process(byte[] rawBody, String signatureHeader) {
+    public Result process(String provider, byte[] rawBody, WebhookRequest request) {
+        WebhookTranslator translator = translators.get(provider);
+        if (translator == null) {
+            throw new IllegalArgumentException("provider de webhook sem translator: " + provider);
+        }
         String raw = new String(rawBody, StandardCharsets.UTF_8);
 
-        if (!signatureValid(rawBody, signatureHeader)) {
+        if (!translator.authenticate(rawBody, request)) {
             tx.executeWithoutResult(s ->
-                    webhooks.save(new WebhookEvent(PROVIDER, false, asJsonOrWrapped(raw), null)));
+                    webhooks.save(new WebhookEvent(provider, false, asJsonOrWrapped(raw), null)));
             throw new InvalidWebhookSignatureException();
         }
 
-        JsonNode node = parse(raw);
-        String e2eId = node.path("e2eId").asString(null);
-        String txid = node.path("txid").asString(null);
-        String status = node.path("status").asString(null);
-        if (e2eId == null || e2eId.isBlank()) {
-            throw new InvalidWebhookPayloadException("payload sem e2eId");
+        List<SettlementEvent> events = translator.translate(rawBody);
+        if (events.isEmpty()) {
+            // ping de configuração, evento de outro tipo: registra e segue (I5)
+            tx.executeWithoutResult(s -> {
+                WebhookEvent event = webhooks.save(new WebhookEvent(provider, true, raw, null));
+                event.markProcessed(OffsetDateTime.now());
+            });
+            log.info("webhook sem evento de liquidação provider={}", provider);
+            return Result.IGNORED;
         }
 
+        Result aggregate = Result.IGNORED;
+        for (SettlementEvent event : events) {
+            Result result = handleOne(provider, raw, event);
+            if (result.ordinal() < aggregate.ordinal()) {
+                aggregate = result;
+            }
+        }
+        return aggregate;
+    }
+
+    private Result handleOne(String provider, String raw, SettlementEvent event) {
         try {
-            return tx.execute(s -> handleVerified(raw, e2eId, txid, status));
+            return tx.execute(s -> settle(provider, raw, event));
         } catch (DataIntegrityViolationException e) {
-            // uq_webhook_dedupe: replay do mesmo e2eId — 200 sem reprocessar
-            log.info("webhook duplicado ignorado provider={} e2eId={}", PROVIDER, e2eId);
+            // uq_webhook_dedupe: replay do mesmo evento — 200 sem reprocessar
+            log.info("webhook duplicado ignorado provider={} dedupe={}", provider, event.dedupeKey());
             return Result.DUPLICATE;
         }
     }
 
     /** Roda inteiro dentro de UMA transação (TransactionTemplate). */
-    private Result handleVerified(String raw, String e2eId, String txid, String status) {
-        WebhookEvent event = new WebhookEvent(PROVIDER, true, raw, e2eId);
-        webhooks.saveAndFlush(event); // dedupe decide aqui: violação estoura para o caller
+    private Result settle(String provider, String raw, SettlementEvent event) {
+        WebhookEvent stored = new WebhookEvent(provider, true, raw, event.dedupeKey());
+        webhooks.saveAndFlush(stored); // dedupe decide aqui: violação estoura para o caller
 
         OffsetDateTime now = OffsetDateTime.now();
-        event.markProcessed(now);
+        stored.markProcessed(now);
 
-        if (!"CONCLUIDA".equalsIgnoreCase(status)) {
-            log.info("webhook status={} não liquida nada e2eId={}", status, e2eId);
+        if (!event.settles()) {
+            log.info("evento não liquida nada provider={} dedupe={}", provider, event.dedupeKey());
             return Result.IGNORED;
         }
 
-        Charge charge = txid == null ? null : charges.findByProviderRef(txid).orElse(null);
+        Charge charge = event.txid() == null ? null : charges.findByProviderRef(event.txid()).orElse(null);
         if (charge == null) {
-            log.warn("webhook para charge desconhecida txid={} e2eId={}", txid, e2eId);
+            log.warn("webhook para charge desconhecida provider={} txid={} dedupe={}",
+                    provider, event.txid(), event.dedupeKey());
             return Result.UNKNOWN_CHARGE;
         }
         if (charge.getStatus() != ChargeStatus.PENDING) {
-            log.info("charge {} já em {} — e2eId={} ignorado", charge.getId(), charge.getStatus(), e2eId);
+            log.info("charge {} já em {} — dedupe={} ignorado", charge.getId(), charge.getStatus(), event.dedupeKey());
             return Result.IGNORED;
         }
 
         charge.markSettled(now);
         outbox.save(new OutboxEvent("charge", charge.getId(), "charge.settled",
-                json.writeValueAsString(new ChargeSettled(charge.getId(), charge.getInvoiceId(), e2eId, now))));
-        log.info("charge {} SETTLED via webhook e2eId={} (outbox charge.settled gravado)", charge.getId(), e2eId);
+                json.writeValueAsString(new ChargeSettled(
+                        charge.getId(), charge.getInvoiceId(), event.dedupeKey(), now))));
+        log.info("charge {} SETTLED via webhook provider={} e2eId={} (outbox charge.settled gravado)",
+                charge.getId(), provider, event.dedupeKey());
         return Result.PROCESSED;
     }
 
     record ChargeSettled(Long chargeId, Long invoiceId, String e2eId, OffsetDateTime settledAt) {
-    }
-
-    private JsonNode parse(String raw) {
-        try {
-            return json.readTree(raw);
-        } catch (JacksonException e) {
-            throw new InvalidWebhookPayloadException("corpo não é JSON válido");
-        }
     }
 
     /** raw_body é JSONB NOT NULL: corpo ilegível entra embrulhado, mas entra (I5). */
@@ -130,21 +144,6 @@ public class WebhookService {
             return raw;
         } catch (JacksonException e) {
             return json.writeValueAsString(Map.of("_unparsed", raw));
-        }
-    }
-
-    private boolean signatureValid(byte[] rawBody, String signatureHeader) {
-        if (signatureHeader == null || signatureHeader.isBlank()) {
-            return false;
-        }
-        try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(secret, "HmacSHA256"));
-            byte[] expected = mac.doFinal(rawBody);
-            byte[] provided = HexFormat.of().parseHex(signatureHeader.trim().toLowerCase());
-            return MessageDigest.isEqual(expected, provided);
-        } catch (NoSuchAlgorithmException | InvalidKeyException | IllegalArgumentException e) {
-            return false;
         }
     }
 }
