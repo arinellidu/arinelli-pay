@@ -11,20 +11,27 @@ import {
 import { ContractsService } from './contracts.service';
 import { CreateContractDto } from './dto/create-contract.dto';
 
+/**
+ * Mesma janela curta de clients/invoices: gerar a próxima fatura muda o
+ * `nextDueDate` do contrato, e a tela de detalhe precisa refletir isso no
+ * refresh seguinte — não um minuto depois.
+ */
+const CACHE_TTL_MS = 5_000;
+
 @Controller('contracts')
 export class ContractsController {
   constructor(private readonly service: ContractsService) {}
 
   @Get()
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(60_000)
+  @CacheTTL(CACHE_TTL_MS)
   list(@Query('clientId') clientId?: string) {
     return this.service.list(clientId);
   }
 
   @Get(':id')
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(60_000)
+  @CacheTTL(CACHE_TTL_MS)
   byId(@Param('id') id: string) {
     return this.service.byId(id);
   }
