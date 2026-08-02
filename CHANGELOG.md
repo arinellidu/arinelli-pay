@@ -4,6 +4,16 @@ Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 
 ## [Unreleased]
 
+### P07 — Front Next.js 16 (2026-08-01)
+
+- Mundo visual (skill impeccable, direção escolhida pelo usuário sobre o sorteio): **specimen bitmap Emigre** — papel newsprint `#F5F3EC`, tinta `#0A0A0A`, acento sintético único `#00DC5A`; display Handjet em degraus inteiros, texto Public Sans; réguas pontilhadas, halftone como material, botões de canto pixelado, estado como carimbo diagonal (tintas de carimbo `#007A33`/`#C42D10` ≥4.5:1). Registro em `DESIGN.md` (raiz); produto em `PRODUCT.md`; brief em `.impeccable/surfaces/apps-web.md`.
+- Páginas `/clients`, `/clients/[id]`, `/invoices` — Server Components lendo o BFF (`cache: no-store`), PT-BR/R$/dd-mm.
+- Toggle **card ⇄ tabela** via `?view=` (o gesto nativo do mundo: bitmap alto ⇄ texto fino); tabela de faturas em TanStack (ordenação client na página, paginação server via Pageable); filtros status/trilho/cliente/período na querystring (trilho é recorte local rotulado — core não filtra por rail no v1). Ordenação default actionable-first (VENCIDA → ABERTA → PAGA).
+- **Cobrar via Pix**: `Idempotency-Key = crypto.randomUUID()` no client → `POST /bff/charges` → modal com QR do EMV real (canvas pixel-honesto) + copia-e-cola; polling de 3s enquanto PENDENTE; carimbo **PAGA** entra em 3 quadros `steps()` sem reload; modal permanece aberto no pagamento (fechado só pelo usuário).
+- Ação "gerar próxima fatura" na ficha do cliente (server action sobre endpoint existente do P02).
+- Review de finish em contexto isolado (substituto do subagente do skill, ausente nesta instalação): veredicto **ship** após 4 fixes materiais — ordenação do primeiro viewport, contraste de carimbos, contador honesto do recorte de trilho, halftone aplicado (masthead/footer/vazio).
+- Demo gravada de ponta a ponta em `docs/media/demo-pix.gif` (webhook HMAC real liquidando ao vivo).
+
 ### P06 — BFF NestJS (2026-08-01)
 
 - Módulos clients/contracts/invoices/charges consumindo só o gateway (`HttpModule` com baseURL `GATEWAY_URL` e timeout 5s); prefixo global `/bff`, `ValidationPipe` (whitelist) + `ClassSerializerInterceptor`, CORS para o front.
