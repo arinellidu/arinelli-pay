@@ -15,3 +15,8 @@ bin/
 docs/demo-raw.webm
 test-results/
 playwright-report/
+
+# runtime local de agente: lock de sessao e relatorios de critica sao efemeros
+# (.impeccable/surfaces/ continua versionado — aquilo e decisao de design)
+.claude/scheduled_tasks.lock
+.impeccable/critique/
