@@ -2,9 +2,11 @@
 
 Multi-rail billing SaaS — **Pix · boleto/QR · card** — with a minimal CRM flow (CPF/CNPJ → client → contract → invoices), real PSP sandbox integrations, and Open Finance reconciliation.
 
-![Demo: cobrar via Pix → QR → webhook liquida → carimbo PAGA sem reload](docs/media/demo-pix.gif)
+![Automated demo](docs/demo.gif)
 
-*The flow above is real end-to-end: client-generated Idempotency-Key → charge with valid EMV (CRC16) → HMAC-verified webhook → outbox → Go worker marks the invoice PAID → 3s polling stamps the card. Nothing is mocked in the front end (I7).*
+*One real loop, no mocks: invoice → Pix QR (valid EMV) → simulated payment → HMAC-verified webhook → outbox → Go worker → invoice stamped PAID via 3s polling.*
+
+Recorded by `apps/web/e2e/demo.spec.ts` against the full local stack — rerun it anytime to regenerate the GIF from scratch.
 
 **Runtime boundaries by responsibility:** Java 25 LTS / Spring Boot 4.1 (Framework 7) for the transactional core and gateway, Go 1.26 for concurrent workers (outbox, reconciliation), NestJS 11 as a thin BFF, Next.js 16 (React 19.2) for the UI, PostgreSQL 17 throughout.
 

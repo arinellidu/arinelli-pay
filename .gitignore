@@ -12,3 +12,6 @@ bin/
 .vscode/
 .DS_Store
 .env.local
+docs/demo-raw.webm
+test-results/
+playwright-report/

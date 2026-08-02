@@ -6,9 +6,11 @@ import { InvoicesService } from './invoices.service';
 export class InvoicesController {
   constructor(private readonly service: InvoicesService) {}
 
+  /** TTL curto de verdade: a lista alimenta o loop cobrar→PAGA — 60s aqui
+      segurava o carimbo do card por até um minuto depois da liquidação. */
   @Get()
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(60_000)
+  @CacheTTL(5_000)
   search(@Query() query: Record<string, string>) {
     return this.service.search(query);
   }
