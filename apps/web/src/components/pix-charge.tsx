@@ -2,7 +2,20 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "motion/react";
+import { Check, Copy, QrCode } from "lucide-react";
 import QRCode from "qrcode";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Money } from "@/components/money";
+import { Lamp } from "@/components/status-badge";
+import { money } from "@/lib/format";
+import { announcePoll, announceSettlement, holdPending } from "@/lib/signal";
 
 const BFF = process.env.NEXT_PUBLIC_BFF_URL ?? "http://localhost:3001";
 
@@ -13,17 +26,22 @@ interface ChargeState {
 }
 
 /**
- * "Cobrar via Pix" (P07): a Idempotency-Key nasce AQUI (uuid do client) e viaja
- * intacta até o uq_charges_idem do core. Polling de 3s enquanto PENDENTE; o
- * carimbo vira PAGA sem reload quando o webhook liquida (I7 — nada é simulado).
+ * "Cobrar via Pix": a Idempotency-Key nasce AQUI (uuid do client) e viaja
+ * intacta até o uq_charges_idem do core (I1). Polling de 3s enquanto a cobrança
+ * está PENDENTE; cada batida acende o campo de fundo e a liquidação — que só
+ * vem de webhook processado (I7) — dispara a varredura da tela.
  */
 export function PixChargeButton({
   invoiceId,
   invoiceStatus,
+  amount,
+  clientName,
   existingCharge,
 }: {
   invoiceId: number;
   invoiceStatus: string;
+  amount: number;
+  clientName: string;
   existingCharge: ChargeState | null;
 }) {
   const router = useRouter();
@@ -34,8 +52,25 @@ export function PixChargeButton({
   const [error, setError] = useState<string | null>(null);
   // uuid nasce no primeiro clique (lazy: puro no render) e fica estável para replays
   const keyRef = useRef<string | null>(null);
+  // a liquidação pode tirar a fatura da listagem filtrada; se o painel estiver
+  // aberto, o refresh espera o usuário fechar — senão o selo somia junto com o card
+  const deferredRefresh = useRef(false);
 
   const pending = charge?.status === "PENDING" && !paid;
+
+  const closeDialog = useCallback(() => {
+    setOpen(false);
+    if (deferredRefresh.current) {
+      deferredRefresh.current = false;
+      router.refresh();
+    }
+  }, [router]);
+
+  // enquanto houver cobrança viva nesta tela, o campo de fundo fica em vigília
+  useEffect(() => {
+    if (!pending) return;
+    return holdPending();
+  }, [pending]);
 
   useEffect(() => {
     if (!pending) return;
@@ -48,12 +83,18 @@ export function PixChargeButton({
             status: string;
             charge: { status: string } | null;
           };
+          announcePoll();
           if (status.charge && charge) {
             setCharge({ ...charge, status: status.charge.status });
           }
           if (status.status === "PAID") {
             setPaid(true);
-            router.refresh();
+            announceSettlement();
+            if (open) {
+              deferredRefresh.current = true;
+            } else {
+              router.refresh();
+            }
           }
         } catch {
           // rede piscou: a próxima batida do polling tenta de novo
@@ -61,7 +102,7 @@ export function PixChargeButton({
       })();
     }, 3000);
     return () => clearInterval(timer);
-  }, [pending, invoiceId, charge, router]);
+  }, [pending, invoiceId, charge, router, open]);
 
   const createCharge = useCallback(async () => {
     setBusy(true);
@@ -92,8 +133,8 @@ export function PixChargeButton({
 
   const chargeable = invoiceStatus === "OPEN" || invoiceStatus === "OVERDUE";
   const showActions = !paid && chargeable;
-  // paga com modal aberto: o modal fica de pé para o carimbo PAGA aparecer —
-  // fechar é gesto do usuário, nunca do estado
+  // paga com o painel aberto: ele fica de pé para o selo cair na frente de quem
+  // está olhando — fechar é gesto do usuário, nunca do estado
   if (!showActions && !open) {
     return null;
   }
@@ -101,69 +142,77 @@ export function PixChargeButton({
   return (
     <>
       {!showActions ? null : charge ? (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          disabled={!charge.emv}
-          className="px-corners border-2 border-ink bg-paper px-3 py-1.5 text-xs font-bold tracking-[0.14em] hover:bg-ink hover:text-paper disabled:opacity-50"
-        >
-          VER QR PIX
-        </button>
+        <Button variant="glass" size="sm" onClick={() => setOpen(true)} disabled={!charge.emv}>
+          <QrCode data-icon="inline-start" />
+          Ver QR Pix
+        </Button>
       ) : (
-        <button
-          type="button"
-          onClick={() => void createCharge()}
-          disabled={busy}
-          className="px-corners bg-synth px-3 py-1.5 text-xs font-bold tracking-[0.14em] text-ink hover:bg-synth-deep disabled:opacity-50"
-        >
-          {busy ? "COBRANDO…" : "COBRAR VIA PIX"}
-        </button>
+        <Button variant="signal" size="sm" onClick={() => void createCharge()} disabled={busy}>
+          {busy ? "Cobrando…" : "Cobrar via Pix"}
+        </Button>
       )}
-      {error ? <p className="mt-1 text-xs text-alarm">{error}</p> : null}
-      {open && charge?.emv ? (
-        <PixModal
+      {error ? (
+        <p className="mt-1.5 text-xs text-alert" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {charge?.emv ? (
+        <PixDialog
+          open={open}
+          onOpenChange={(next) => (next ? setOpen(true) : closeDialog())}
+          invoiceId={invoiceId}
+          amount={amount}
+          clientName={clientName}
           emv={charge.emv}
-          paid={paid}
-          chargeStatus={charge.status}
-          onClose={() => setOpen(false)}
+          settled={paid || charge.status === "SETTLED"}
         />
       ) : null}
     </>
   );
 }
 
-function PixModal({
+/**
+ * O painel de cobrança é o instrumento aberto: leitura do valor, o QR como
+ * saída impressa do aparelho e a linha de estado ao vivo. Quando o webhook
+ * liquida, o selo cai sobre a leitura e a tela inteira é varrida uma vez.
+ */
+function PixDialog({
+  open,
+  onOpenChange,
+  invoiceId,
+  amount,
+  clientName,
   emv,
-  paid,
-  chargeStatus,
-  onClose,
+  settled,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  invoiceId: number;
+  amount: number;
+  clientName: string;
   emv: string;
-  paid: boolean;
-  chargeStatus: string;
-  onClose: () => void;
+  settled: boolean;
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    if (canvasRef.current) {
-      void QRCode.toCanvas(canvasRef.current, emv, {
-        errorCorrectionLevel: "M",
-        margin: 2,
-        scale: 6,
-        color: { dark: "#0a0a0a", light: "#f5f3ec" },
-      });
-    }
-  }, [emv]);
+  const invoiceNumber = String(invoiceId).padStart(4, "0");
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  // ref de callback em vez de efeito: o popup do Base UI só entra no DOM
+  // depois da transição de abertura, e o efeito rodaria com o canvas ainda nulo
+  const paintQr = useCallback(
+    (canvas: HTMLCanvasElement | null) => {
+      if (!canvas) return;
+      // o QR sai numa chapa clara: código legível por leitor real, e a única
+      // superfície de papel do aparelho
+      void QRCode.toCanvas(canvas, emv, {
+        errorCorrectionLevel: "M",
+        margin: 1,
+        scale: 6,
+        color: { dark: "#07090b", light: "#e9eeeb" },
+      });
+    },
+    [emv],
+  );
 
   const copy = async () => {
     await navigator.clipboard.writeText(emv);
@@ -172,60 +221,100 @@ function PixModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Cobrança Pix"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-sm border-4 border-ink bg-paper"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b-4 border-ink px-4 py-2">
-          <span className="bitmap text-step-24">PIX</span>
-          {paid || chargeStatus === "SETTLED" ? (
-            <span className="stamp stamp-in text-step-16 text-stamp-paid">PAGA</span>
-          ) : (
-            <span className="inline-flex items-center gap-2 text-xs font-medium tracking-wide">
-              <span className="blink-block inline-block h-3 w-3 bg-synth-deep" aria-hidden />
-              AGUARDANDO PAGAMENTO
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fechar"
-            className="bitmap text-step-24 leading-none hover:text-alarm"
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="glass-deep max-h-[92dvh] overflow-x-hidden overflow-y-auto rounded-xl p-0 sm:max-w-md">
+        <div className="flex flex-col gap-1.5 border-b border-white/10 px-5 py-3.5 pr-12 sm:flex-row sm:items-center sm:gap-3">
+          <DialogTitle className="readout text-[13px] font-medium tracking-[0.18em] whitespace-nowrap uppercase">
+            Cobrança Pix
+          </DialogTitle>
+          <span
+            role="status"
+            className="readout inline-flex items-center gap-2 text-[11px] tracking-[0.14em] whitespace-nowrap uppercase sm:ml-auto"
           >
-            ×
-          </button>
+            <Lamp state={settled ? "on" : "live"} />
+            <span className={settled ? "text-signal" : "text-read-soft"}>
+              {settled ? "Liquidada" : "Aguardando pagamento"}
+            </span>
+          </span>
         </div>
 
-        <div className="flex flex-col items-center gap-3 p-5">
-          <canvas ref={canvasRef} className="pixelated border-2 border-ink" />
-          <p className="text-center text-xs text-ink-soft">
-            Escaneie no app do banco ou use o copia-e-cola. A fatura carimba
-            sozinha quando o webhook liquidar.
-          </p>
-          <div className="w-full">
-            <p className="mb-1 text-[10px] font-bold tracking-[0.2em] text-ink-soft">
-              PIX COPIA-E-COLA
+        <div className="space-y-5 px-5 py-5">
+          <div>
+            <p className="readout text-[11px] tracking-[0.16em] text-read-faint uppercase">
+              Fatura {invoiceNumber} · {clientName}
             </p>
-            <code className="block max-h-20 overflow-y-auto break-all border border-ink/40 bg-paper-deep p-2 font-mono text-[10px] leading-snug">
+            <div className="relative mt-2 flex items-end justify-between gap-4">
+              <motion.span
+                animate={{ color: settled ? "#00dc5a" : "#e9eeeb" }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <Money value={amount} className="text-[2.5rem] leading-none font-medium" />
+              </motion.span>
+              <AnimatePresence>
+                {settled ? <SettlementSeal amount={amount} /> : null}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-3">
+            <div className="rounded-lg bg-read p-2.5 shadow-[0_18px_40px_-24px_rgb(0_0_0/90%)]">
+              <canvas
+                ref={paintQr}
+                role="img"
+                aria-label={`QR Pix da fatura ${invoiceNumber} — ${money(amount)}`}
+                className="block"
+              />
+            </div>
+            <DialogDescription className="max-w-[42ch] text-center text-xs text-read-soft">
+              Escaneie no app do banco ou use o copia‑e‑cola. A fatura liquida
+              sozinha quando o webhook confirmar — o front não decide isso.
+            </DialogDescription>
+          </div>
+
+          <div>
+            <p className="readout mb-1.5 text-[10px] tracking-[0.2em] text-read-faint uppercase">
+              Pix copia-e-cola
+            </p>
+            <code className="block max-h-20 overflow-y-auto rounded-md border border-white/8 bg-black/35 p-2.5 font-mono text-[11px] leading-relaxed break-all text-read-soft">
               {emv}
             </code>
           </div>
-          <button
-            type="button"
-            onClick={() => void copy()}
-            className="px-corners w-full bg-synth px-3 py-2 text-sm font-bold tracking-[0.14em] text-ink hover:bg-synth-deep"
-          >
-            {copied ? "COPIADO ✓" : "COPIAR CÓDIGO"}
-          </button>
+
+          <Button variant="signal" className="h-9 w-full" onClick={() => void copy()}>
+            {copied ? <Check data-icon="inline-start" /> : <Copy data-icon="inline-start" />}
+            {copied ? "Código copiado" : "Copiar código"}
+          </Button>
+          <span role="status" className="sr-only">
+            {copied ? "Código Pix copiado" : ""}
+          </span>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** O único momento coreografado: a chegada da liquidação. */
+function SettlementSeal({ amount }: { amount: number }) {
+  return (
+    <motion.span
+      className="relative inline-flex shrink-0 items-center gap-2 rounded-md border border-signal/40 bg-signal/12 px-2.5 py-1.5"
+      initial={{ opacity: 0, scale: 0.72, filter: "blur(8px)" }}
+      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ type: "spring", stiffness: 400, damping: 24, mass: 0.7 }}
+      aria-label={`Paga — ${money(amount)}`}
+    >
+      <motion.span
+        aria-hidden
+        className="absolute inset-0 rounded-md border border-signal"
+        initial={{ opacity: 0.65, scale: 1 }}
+        animate={{ opacity: 0, scale: 1.9 }}
+        transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+      />
+      <Check className="size-4 text-signal" aria-hidden />
+      <span className="readout text-xs font-medium tracking-[0.18em] text-signal uppercase">
+        Paga
+      </span>
+    </motion.span>
   );
 }

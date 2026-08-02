@@ -1,8 +1,11 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { bff } from "@/lib/bff";
+import { FilterFold } from "@/components/filter-fold";
 import { InvoiceCards } from "@/components/invoice-cards";
+import { InvoiceFilters } from "@/components/invoice-filters";
 import { InvoicesTable } from "@/components/invoices-table";
-import { SpecimenHeader } from "@/components/specimen-header";
+import { PageHeader, Readout, ReadoutStrip } from "@/components/page-header";
 import { ViewToggle } from "@/components/view-toggle";
 
 interface Search {
@@ -16,6 +19,10 @@ interface Search {
 }
 
 export const dynamic = "force-dynamic";
+
+export const metadata = { title: "Faturas" };
+
+const railLabel: Record<string, string> = { PIX: "Pix", BOLETO: "boleto", CARD: "cartão" };
 
 export default async function InvoicesPage({
   searchParams,
@@ -45,9 +52,8 @@ export default async function InvoicesPage({
       ? pageData.content.filter((invoice) => invoice.charge?.rail === params.rail)
       : pageData.content;
 
-  // sem filtro de status, o que exige ação vem primeiro: VENCIDA, depois
-  // ABERTA por vencimento, PAGA/CANCELADA por último — o primeiro viewport
-  // carrega a urgência e a ação verde
+  // sem filtro de status, o que exige ação vem primeiro: vencidas, depois
+  // abertas por vencimento, pagas/canceladas por último
   const actionRank: Record<string, number> = { OVERDUE: 0, OPEN: 1, DRAFT: 2, PAID: 3, CANCELED: 4 };
   const ordered = params.status
     ? invoices
@@ -57,7 +63,11 @@ export default async function InvoicesPage({
           a.dueDate.localeCompare(b.dueDate),
       );
 
+  const liveCharges = ordered.filter(
+    (invoice) => invoice.charge?.status === "PENDING" && invoice.status !== "PAID",
+  ).length;
   const railCut = params.rail ? { shown: ordered.length, of: pageData.content.length } : null;
+  const invertedRange = Boolean(params.from && params.to && params.from > params.to);
 
   const makeHref = (overrides: Partial<Search>) => {
     const next = new URLSearchParams();
@@ -71,18 +81,42 @@ export default async function InvoicesPage({
 
   return (
     <div>
-      <SpecimenHeader
-        word="FATURAS"
-        note="Cada carimbo desta página nasce de um evento real: webhook HMAC verificado → outbox → worker Go. Nada aqui é estado inventado no front."
+      <PageHeader
+        title="Faturas"
+        note="Nenhum estado desta tela é decidido no front: a fatura só vira paga quando o webhook assinado é verificado, gravado no outbox e processado pelo worker Go."
+        readout={
+          <ReadoutStrip>
+            <Readout label="Nesta página" value={ordered.length} />
+            <Readout
+              label="Cobranças vivas"
+              value={liveCharges}
+              tone={liveCharges > 0 ? "signal" : "read"}
+            />
+          </ReadoutStrip>
+        }
       />
 
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <FilterForm params={params} clients={clients} />
+        <FilterFold>
+          <InvoiceFilters params={params} clients={clients} />
+        </FilterFold>
         <ViewToggle view={view} makeHref={(v) => makeHref({ view: v, page: "0" })} />
       </div>
 
+      {invertedRange ? (
+        <p className="mb-4 text-xs text-alert" role="status">
+          Período invertido: a data inicial vem depois da final, então nenhuma
+          fatura pode bater. Troque as datas para ver resultados.
+        </p>
+      ) : null}
+
       {ordered.length === 0 ? (
-        <EmptyState hasFilters={Boolean(params.status || params.clientId || params.rail || params.from || params.to)} />
+        <EmptyState
+          hasFilters={Boolean(
+            params.status || params.clientId || params.rail || params.from || params.to,
+          )}
+          rail={params.rail}
+        />
       ) : view === "table" ? (
         <InvoicesTable invoices={ordered} />
       ) : (
@@ -90,85 +124,20 @@ export default async function InvoicesPage({
       )}
 
       {railCut ? (
-        <p className="mt-6 text-xs text-ink-soft">
-          {railCut.shown} de {railCut.of} nesta página (recorte local de trilho) ·{" "}
-          {pageData.page.totalElements} no total
+        <p className="mt-6 text-xs text-read-faint">
+          {railCut.shown} de {railCut.of} nesta página no trilho{" "}
+          {railLabel[params.rail ?? ""] ?? params.rail} — o recorte de trilho vale
+          por página; navegue para ver as demais.
         </p>
-      ) : (
-        <Pagination
-          page={pageData.page.number}
-          totalPages={pageData.page.totalPages}
-          totalElements={pageData.page.totalElements}
-          makeHref={(page) => makeHref({ page: String(page) })}
-        />
-      )}
-    </div>
-  );
-}
+      ) : null}
 
-function FilterForm({
-  params,
-  clients,
-}: {
-  params: Search;
-  clients: { id: number; name: string }[];
-}) {
-  const select =
-    "border-2 border-ink bg-paper px-2 py-1.5 text-xs font-medium tracking-wide";
-  return (
-    <form method="get" action="/invoices" className="flex flex-wrap items-end gap-2">
-      <input type="hidden" name="view" value={params.view ?? "cards"} />
-      <label className="flex flex-col gap-1 text-[10px] font-bold tracking-[0.2em] text-ink-soft">
-        STATUS
-        <select name="status" defaultValue={params.status ?? ""} className={select}>
-          <option value="">todas</option>
-          <option value="OPEN">abertas</option>
-          <option value="PAID">pagas</option>
-          <option value="OVERDUE">vencidas</option>
-          <option value="CANCELED">canceladas</option>
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-[10px] font-bold tracking-[0.2em] text-ink-soft">
-        TRILHO
-        <select name="rail" defaultValue={params.rail ?? ""} className={select}>
-          <option value="">todos</option>
-          <option value="PIX">Pix</option>
-          <option value="BOLETO">boleto</option>
-          <option value="CARD">cartão</option>
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-[10px] font-bold tracking-[0.2em] text-ink-soft">
-        CLIENTE
-        <select name="clientId" defaultValue={params.clientId ?? ""} className={select}>
-          <option value="">todos</option>
-          {clients.map((client) => (
-            <option key={client.id} value={client.id}>
-              {client.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="flex flex-col gap-1 text-[10px] font-bold tracking-[0.2em] text-ink-soft">
-        DE
-        <input type="date" name="from" defaultValue={params.from ?? ""} className={select} />
-      </label>
-      <label className="flex flex-col gap-1 text-[10px] font-bold tracking-[0.2em] text-ink-soft">
-        ATÉ
-        <input type="date" name="to" defaultValue={params.to ?? ""} className={select} />
-      </label>
-      <button
-        type="submit"
-        className="px-corners bg-ink px-3 py-2 text-xs font-bold tracking-[0.16em] text-paper hover:bg-ink-soft"
-      >
-        FILTRAR
-      </button>
-      <Link
-        href="/invoices"
-        className="px-2 py-2 text-xs text-ink-soft underline decoration-dotted hover:text-ink"
-      >
-        limpar
-      </Link>
-    </form>
+      <Pagination
+        page={pageData.page.number}
+        totalPages={pageData.page.totalPages}
+        totalElements={pageData.page.totalElements}
+        makeHref={(page) => makeHref({ page: String(page) })}
+      />
+    </div>
   );
 }
 
@@ -183,41 +152,50 @@ function Pagination({
   totalElements: number;
   makeHref: (page: number) => string;
 }) {
+  const total = `${totalElements} fatura${totalElements === 1 ? "" : "s"} no total`;
+
   if (totalPages <= 1) {
-    return (
-      <p className="mt-6 text-xs text-ink-soft">
-        {totalElements} fatura{totalElements === 1 ? "" : "s"}
-      </p>
-    );
+    return <p className="mt-6 text-xs text-read-faint">{total}</p>;
   }
+
+  const step =
+    "glass inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium tracking-[0.08em] uppercase hover:bg-white/12";
+
   return (
-    <nav className="mt-6 flex items-center gap-3 text-xs" aria-label="Paginação">
+    <nav className="mt-8 flex flex-wrap items-center gap-4" aria-label="Paginação">
       {page > 0 ? (
-        <Link href={makeHref(page - 1)} className="border-2 border-ink px-2 py-1 font-bold hover:bg-ink hover:text-paper">
-          ← ANTERIOR
+        <Link href={makeHref(page - 1)} className={step}>
+          <ChevronLeft className="size-3.5" aria-hidden />
+          Anterior
         </Link>
       ) : null}
-      <span className="bitmap text-step-16">
-        PÁG {page + 1}/{totalPages}
+      <span className="readout text-sm text-read-soft">
+        Página {page + 1} de {totalPages}
       </span>
       {page + 1 < totalPages ? (
-        <Link href={makeHref(page + 1)} className="border-2 border-ink px-2 py-1 font-bold hover:bg-ink hover:text-paper">
-          PRÓXIMA →
+        <Link href={makeHref(page + 1)} className={step}>
+          Próxima
+          <ChevronRight className="size-3.5" aria-hidden />
         </Link>
       ) : null}
-      <span className="text-ink-soft">{totalElements} no total</span>
+      <span className="text-xs text-read-faint">{total}</span>
     </nav>
   );
 }
 
-function EmptyState({ hasFilters }: { hasFilters: boolean }) {
+function EmptyState({ hasFilters, rail }: { hasFilters: boolean; rail?: string }) {
+  const futureRail = rail === "BOLETO" || rail === "CARD";
   return (
-    <div className="halftone-fine border-2 border-dashed border-ink/40 px-6 py-14 text-center">
-      <p className="bitmap text-step-32 text-ink-soft">NADA POR AQUI</p>
-      <p className="mx-auto mt-2 max-w-[48ch] text-sm text-ink-soft">
-        {hasFilters
-          ? "Nenhuma fatura bate com esses filtros. Limpe os filtros ou mude o período."
-          : "Nenhuma fatura ainda. Abra um cliente, escolha um contrato e gere a próxima fatura."}
+    <div className="glass rounded-xl px-6 py-16 text-center">
+      <p className="text-2xl font-semibold tracking-[-0.01em]">
+        {futureRail ? "Trilho em preparo" : "Nada nesta leitura"}
+      </p>
+      <p className="mx-auto mt-3 max-w-[52ch] text-sm leading-relaxed text-read-soft">
+        {futureRail
+          ? `Hoje só o Pix executa. ${railLabel[rail ?? ""] ?? ""} já existe como vocabulário do sistema (etiqueta, filtro, coluna) e entra nos próximos passos.`
+          : hasFilters
+            ? "Nenhuma fatura bate com esses filtros. Limpe os filtros ou mude o período."
+            : "Nenhuma fatura ainda. Abra um cliente, escolha um contrato e gere a próxima fatura."}
       </p>
     </div>
   );
