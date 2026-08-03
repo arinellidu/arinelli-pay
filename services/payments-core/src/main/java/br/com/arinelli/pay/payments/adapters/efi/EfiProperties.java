@@ -13,6 +13,9 @@ import java.util.List;
  * @param certPassword      senha do {@code .p12} — vazia nos certificados padrão da Efí
  * @param pixKey            chave Pix do recebedor cadastrada na conta
  * @param expirationSeconds {@code calendario.expiracao} da cobrança imediata
+ * @param webhookSecret     segredo da query do webhook ({@code ?hmac=}) — quem o usa é o
+ *                          {@code EfiWebhookTranslator}; validado aqui porque sem ele as
+ *                          cobranças funcionam mas nenhuma notificação autentica (401 em todas)
  */
 record EfiProperties(
         String baseUrl,
@@ -23,7 +26,8 @@ record EfiProperties(
         String pixKey,
         int expirationSeconds,
         Duration connectTimeout,
-        Duration readTimeout) {
+        Duration readTimeout,
+        String webhookSecret) {
 
     /**
      * Falha no boot, não na primeira cobrança: subir com PIX_PROVIDER=efi e credencial
@@ -36,6 +40,7 @@ record EfiProperties(
         require(missing, "EFI_CERT_PATH", certPath);
         require(missing, "EFI_PIX_KEY", pixKey);
         require(missing, "EFI_BASE_URL", baseUrl);
+        require(missing, "EFI_WEBHOOK_SECRET", webhookSecret);
         if (!missing.isEmpty()) {
             throw new IllegalStateException(
                     "PIX_PROVIDER=efi exige as variáveis: " + String.join(", ", missing));

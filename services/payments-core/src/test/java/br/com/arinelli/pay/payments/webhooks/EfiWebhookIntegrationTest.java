@@ -192,10 +192,13 @@ class EfiWebhookIntegrationTest {
 
     @Test
     @Order(7)
-    void pixSemEndToEndIdRetorna400() {
+    void pixSemEndToEndIdRetorna400ComOCorpoRegistrado() {
         ResponseEntity<JsonNode> response = postEfi("/webhooks/efi/pix?hmac=" + SECRET,
                 "{\"pix\":[{\"txid\":\"" + txid + "\",\"valor\":\"320.00\"}]}");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        // I5: autenticado mas malformado ainda deixa rastro (sem dedupe_key e sem processed_at)
+        assertThat(webhookEventsEfi("signature_ok = true and dedupe_key is null and processed_at is null"))
+                .isEqualTo(1);
     }
 }

@@ -35,6 +35,7 @@ public class EfiAdapter implements PixProvider {
 
     private static final Logger log = LoggerFactory.getLogger(EfiAdapter.class);
     private static final int MAX_ATTEMPTS = 3;
+    private static final long RETRY_BACKOFF_MS = 200;
     private static final int ERROR_BODY_LIMIT = 300;
 
     private final RestClient client;
@@ -86,11 +87,20 @@ public class EfiAdapter implements PixProvider {
 
     @Override
     public PixChargeStatus consult(String txid) {
-        Cob cob = execute("consultar cobrança", () -> client.get()
-                .uri("/v2/cob/{txid}", txid)
-                .header(HttpHeaders.AUTHORIZATION, tokens.bearer())
-                .retrieve()
-                .body(Cob.class));
+        Cob cob;
+        try {
+            cob = execute("consultar cobrança", () -> client.get()
+                    .uri("/v2/cob/{txid}", txid)
+                    .header(HttpHeaders.AUTHORIZATION, tokens.bearer())
+                    .retrieve()
+                    .body(Cob.class));
+        } catch (PixProviderException e) {
+            // 404 = a Efí não conhece o txid; para a conciliação isso é resposta, não erro
+            if (e.getCause() instanceof HttpClientErrorException.NotFound) {
+                return PixChargeStatus.unknown(txid);
+            }
+            throw e;
+        }
 
         if (cob == null) {
             return PixChargeStatus.unknown(txid);
@@ -136,6 +146,9 @@ public class EfiAdapter implements PixProvider {
             } catch (ResourceAccessException | HttpServerErrorException e) {
                 last = e;
                 log.warn("Efí transitório ao {} (tentativa {}/{}): {}", what, attempt, MAX_ATTEMPTS, e.getMessage());
+                if (attempt < MAX_ATTEMPTS) {
+                    backoff(attempt);
+                }
             } catch (HttpClientErrorException.Unauthorized e) {
                 last = e;
                 tokens.invalidate();
@@ -145,7 +158,22 @@ public class EfiAdapter implements PixProvider {
                         + e.getStatusCode().value() + " " + shortBody(e), e);
             }
         }
+        if (last instanceof HttpClientErrorException.Unauthorized) {
+            // 401 persistente não é indisponibilidade: é credencial — mandar o operador para o lugar certo
+            throw new PixProviderException("Efí recusou as credenciais ao " + what
+                    + " mesmo após reautenticar — verifique EFI_CLIENT_ID/EFI_CLIENT_SECRET no painel", last);
+        }
         throw new PixProviderException("Efí indisponível ao " + what + " após " + MAX_ATTEMPTS + " tentativas", last);
+    }
+
+    /** Linear resolve nesta escala (200ms, 400ms) — martelar PSP em 5xx sem pausa só piora. */
+    private static void backoff(int attempt) {
+        try {
+            Thread.sleep(RETRY_BACKOFF_MS * attempt);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new PixProviderException("interrompido aguardando retry da Efí", e);
+        }
     }
 
     /** O corpo de erro da Efí ({@code {nome, mensagem}}) é o que explica a recusa — vale no log, truncado. */

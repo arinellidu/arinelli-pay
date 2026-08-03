@@ -298,6 +298,33 @@ class EfiAdapterTest {
         assertThat(adapter.consult(TXID).status()).isEqualTo(PixStatus.UNKNOWN);
     }
 
+    @Test
+    void consultaDeTxidDesconhecidoNaEfiDevolveUnknownSemEstourar() {
+        stubToken("TOK-1");
+        efi.stubFor(get(urlEqualTo(COB_URL)).willReturn(aResponse().withStatus(404)
+                .withHeader("Content-Type", "application/json")
+                .withBody("{\"nome\":\"cobranca_nao_encontrada\",\"mensagem\":\"Cobrança não encontrada\"}")));
+
+        PixChargeStatus status = adapter.consult(TXID);
+
+        assertThat(status.status()).isEqualTo(PixStatus.UNKNOWN);
+        assertThat(status.txid()).isEqualTo(TXID);
+        efi.verify(1, getRequestedFor(urlEqualTo(COB_URL))); // 404 não é transitório: sem retry
+    }
+
+    @Test
+    void erro401PersistenteFalhaApontandoCredenciaisENaoIndisponibilidade() {
+        stubToken("TOK-1");
+        efi.stubFor(put(urlEqualTo(COB_URL)).willReturn(aResponse().withStatus(401)));
+
+        assertThatThrownBy(this::criar)
+                .isInstanceOf(PixProviderException.class)
+                .hasMessageContaining("credenciais")
+                .hasMessageNotContaining("indisponível");
+        efi.verify(3, putRequestedFor(urlEqualTo(COB_URL)));
+        efi.verify(3, postRequestedFor(urlEqualTo("/oauth/token"))); // cada 401 invalida e reautentica
+    }
+
     /** Relógio controlado: expiração de token é regra de negócio, não corrida com o wall clock. */
     private static final class MutableClock extends Clock {
 

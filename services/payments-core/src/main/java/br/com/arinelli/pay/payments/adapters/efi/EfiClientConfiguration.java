@@ -33,9 +33,10 @@ class EfiClientConfiguration {
             @Value("${pix.efi.pix-key:}") String pixKey,
             @Value("${pix.efi.expiration-seconds:3600}") int expirationSeconds,
             @Value("${pix.efi.connect-timeout:3s}") Duration connectTimeout,
-            @Value("${pix.efi.read-timeout:10s}") Duration readTimeout) {
+            @Value("${pix.efi.read-timeout:10s}") Duration readTimeout,
+            @Value("${webhook.efi-secret:}") String webhookSecret) {
         EfiProperties properties = new EfiProperties(baseUrl, clientId, clientSecret, certPath, certPassword,
-                pixKey, expirationSeconds, connectTimeout, readTimeout);
+                pixKey, expirationSeconds, connectTimeout, readTimeout, webhookSecret);
         properties.validate();
         log.info("provider Pix = efi ({}), cobranças expiram em {}s", baseUrl, expirationSeconds);
         return properties;

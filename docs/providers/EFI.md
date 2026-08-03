@@ -40,6 +40,8 @@ EFI_WEBHOOK_SECRET=um-segredo-longo-e-aleatorio
 
 Faltou variável, o serviço **não sobe**: `EfiProperties.validate()` lista o que falta no
 startup. Descobrir credencial faltando na primeira cobrança do cliente é tarde demais.
+Isso inclui `EFI_WEBHOOK_SECRET`: sem ele as cobranças funcionariam, mas toda notificação
+tomaria 401 (fail-closed) e nenhuma charge liquidaria — falha silenciosa, a pior espécie.
 
 ### `.p12` que não carrega
 
@@ -87,6 +89,10 @@ Payload real:
 
 Cada item é deduplicado **individualmente** por `endToEndId` (`uq_webhook_dedupe`), então
 lote reenviado não liquida nada duas vezes.
+
+Devolução (refund) ainda não é tratada: a notificação de devolução chega com o mesmo
+`endToEndId` do pix original e morre no dedupe como `duplicate`. Entra quando o produto
+tiver o fluxo de estorno.
 
 ## 4. Fluxo ponta a ponta
 

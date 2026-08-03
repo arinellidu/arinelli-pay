@@ -20,7 +20,7 @@ spring:
 # I5: todo webhook é verificado ou descartado — cada provider com seu mecanismo
 webhook:
   hmac-secret: ${WEBHOOK_HMAC_SECRET:change-me}   # fake / pix-sandbox: HMAC-SHA256 no header X-Signature
-  efi-secret: ${EFI_WEBHOOK_SECRET:}              # Efí: segredo na query (?hmac=), fail-closed se vazio (ADR-004)
+  efi-secret: ${EFI_WEBHOOK_SECRET:}              # Efí: segredo na query (?hmac=), fail-closed (ADR-004); com pix.provider=efi o boot exige (EfiProperties)
 
 # I4: seleção de provider por configuração; implementações ficam em adapters/
 pix:

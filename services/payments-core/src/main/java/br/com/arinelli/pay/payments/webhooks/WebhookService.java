@@ -70,7 +70,15 @@ public class WebhookService {
             throw new InvalidWebhookSignatureException();
         }
 
-        List<SettlementEvent> events = translator.translate(rawBody);
+        List<SettlementEvent> events;
+        try {
+            events = translator.translate(rawBody);
+        } catch (InvalidWebhookPayloadException e) {
+            // I5: autenticado mas ilegível também é registrado — descartar sem rastro é como não ter recebido
+            tx.executeWithoutResult(s ->
+                    webhooks.save(new WebhookEvent(provider, true, asJsonOrWrapped(raw), null)));
+            throw e;
+        }
         if (events.isEmpty()) {
             // ping de configuração, evento de outro tipo: registra e segue (I5)
             tx.executeWithoutResult(s -> {

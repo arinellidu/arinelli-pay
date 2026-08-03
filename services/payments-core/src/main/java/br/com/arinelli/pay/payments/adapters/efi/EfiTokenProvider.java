@@ -51,8 +51,11 @@ class EfiTokenProvider {
             if (current != null && current.validAt(clock.instant())) {
                 return current.header();
             }
-            cached = fetch();
-            return cached.header();
+            // invalidate() escreve cached sem lock: devolver a local evita NPE se outro
+            // thread anular o campo entre a atribuição e o return
+            Token fresh = fetch();
+            cached = fresh;
+            return fresh.header();
         }
     }
 
