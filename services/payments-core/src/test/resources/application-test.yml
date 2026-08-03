@@ -8,3 +8,4 @@ spring:
 
 webhook:
   hmac-secret: test-secret
+  efi-secret: efi-test-secret

@@ -97,7 +97,8 @@ class WebhookApiIntegrationTest {
         ResponseEntity<JsonNode> errada = postWebhook(body, "deadbeef".repeat(8));
         assertThat(errada.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
 
-        Long rejected = jdbc.sql("select count(*) from webhook_events where signature_ok = false")
+        // escopado no provider: o mesmo banco atende os testes de todos os trilhos
+        Long rejected = jdbc.sql("select count(*) from webhook_events where provider = 'pix' and signature_ok = false")
                 .query(Long.class).single();
         assertThat(rejected).isEqualTo(2);
 
@@ -157,7 +158,8 @@ class WebhookApiIntegrationTest {
         ResponseEntity<JsonNode> ignored = postWebhook(devolvida, hmac(devolvida));
         assertThat(ignored.getBody().path("result").asString()).isEqualTo("ignored");
 
-        Long outboxTotal = jdbc.sql("select count(*) from outbox_events").query(Long.class).single();
+        Long outboxTotal = jdbc.sql("select count(*) from outbox_events where aggregate_id = :id")
+                .param("id", chargeId).query(Long.class).single();
         assertThat(outboxTotal).isEqualTo(1);
     }
 
@@ -195,7 +197,7 @@ class WebhookApiIntegrationTest {
         ResponseEntity<JsonNode> response = postWebhook("isto nao é json", "00");
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
 
-        Long wrapped = jdbc.sql("select count(*) from webhook_events where signature_ok = false and jsonb_exists(raw_body, '_unparsed')")
+        Long wrapped = jdbc.sql("select count(*) from webhook_events where provider = 'pix' and signature_ok = false and jsonb_exists(raw_body, '_unparsed')")
                 .query(Long.class).single();
         assertThat(wrapped).isEqualTo(1);
     }

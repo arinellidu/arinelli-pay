@@ -17,14 +17,25 @@ spring:
       ddl-auto: validate
     open-in-view: false
 
-# I5: assinatura HMAC-SHA256 sobre o corpo cru dos webhooks
+# I5: todo webhook é verificado ou descartado — cada provider com seu mecanismo
 webhook:
-  hmac-secret: ${WEBHOOK_HMAC_SECRET:change-me}
+  hmac-secret: ${WEBHOOK_HMAC_SECRET:change-me}   # fake / pix-sandbox: HMAC-SHA256 no header X-Signature
+  efi-secret: ${EFI_WEBHOOK_SECRET:}              # Efí: segredo na query (?hmac=), fail-closed (ADR-004); com pix.provider=efi o boot exige (EfiProperties)
 
 # I4: seleção de provider por configuração; implementações ficam em adapters/
 pix:
-  provider: ${PIX_PROVIDER:fake}          # fake | sandbox (efi entra no P08)
+  provider: ${PIX_PROVIDER:fake}          # fake | sandbox | efi
   sandbox-url: ${PIX_SANDBOX_URL:http://localhost:8080}
+  efi:
+    base-url: ${EFI_BASE_URL:https://pix-h.api.efipay.com.br}   # homologação; produção: https://pix.api.efipay.com.br
+    client-id: ${EFI_CLIENT_ID:}
+    client-secret: ${EFI_CLIENT_SECRET:}
+    cert-path: ${EFI_CERT_PATH:}                                 # .p12 do painel da Efí (mTLS obrigatório)
+    cert-password: ${EFI_CERT_PASSWORD:}                         # vazia nos certificados padrão
+    pix-key: ${EFI_PIX_KEY:}
+    expiration-seconds: ${EFI_COB_EXPIRACAO:3600}
+    connect-timeout: 3s
+    read-timeout: 10s                                            # sandbox de PSP é lento: leitura mais folgada que o pix-sandbox local
 
 management:
   endpoints:

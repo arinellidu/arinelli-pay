@@ -4,6 +4,17 @@ Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 
 ## [Unreleased]
 
+### P08 — Pix real na Efí (2026-08-02)
+
+- `EfiAdapter implements PixProvider` (I4): OAuth2 `client_credentials` **sobre mTLS** (`.p12` do painel, `EfiMtls`), cobrança imediata em `PUT /v2/cob/{txid}` com o txid NOSSO — repetir o PUT devolve a mesma cobrança, estendendo o I1 até dentro do PSP. EMV do `pixCopiaECola`, com fallback para `GET /v2/loc/{id}/qrcode`. Ligado por `PIX_PROVIDER=efi`; nenhum tipo HTTP/OAuth sai de `adapters/efi`.
+- `EfiTokenProvider`: token reaproveitado entre cobranças, renovado 60s antes do vencimento e invalidado na hora em 401 (reautentica e reenvia). Relógio injetado — expiração é regra, não corrida com o wall clock.
+- Retry só em transitório (I/O e 5xx, 3 tentativas); 4xx falha direto preservando a mensagem da Efí. Credencial faltando derruba o **boot**, não a primeira cobrança (`EfiProperties.validate()`).
+- Port `PixProvider` ganhou `consult(txid)` → `PixChargeStatus` (`ACTIVE|SETTLED|REMOVED|UNKNOWN`), fonte da verdade para a conciliação do P12. Providers de dev devolvem `UNKNOWN` pelo default do port.
+- **Webhook convergindo para o MESMO pipeline do P04:** `WebhookService` virou provider-agnóstico e o que varia por PSP saiu para o port `WebhookTranslator` (autenticar + traduzir para `SettlementEvent`). `/webhooks/efi` e `/webhooks/efi/pix` (a Efí acrescenta `/pix` à URL cadastrada); ping de configuração responde 200 sem efeito; lote com vários pix é deduplicado item a item por `endToEndId`.
+- Autenticação do webhook da Efí (que não assina o corpo): segredo na query, tempo constante, fail-closed — racional e alternativas em **ADR-004**.
+- Testes: `EfiAdapterTest` (10, WireMock — token, retry, 401, fallback do QR, tradução de status) e `EfiWebhookIntegrationTest` (7, Testcontainers — 401 registrado, ping, liquidação + outbox, replay, lote). Asserções do P04 escopadas por provider: o banco de teste agora atende mais de um trilho.
+- `docs/providers/EFI.md` com credenciais, cadastro do webhook, os dois detalhes que mordem (sufixo `/pix`, `.p12` legado) e o que **não** está coberto por teste (o handshake mTLS).
+
 ### P07 — Front Next.js 16 (2026-08-01)
 
 - Mundo visual (skill impeccable, direção escolhida pelo usuário sobre o sorteio): **specimen bitmap Emigre** — papel newsprint `#F5F3EC`, tinta `#0A0A0A`, acento sintético único `#00DC5A`; display Handjet em degraus inteiros, texto Public Sans; réguas pontilhadas, halftone como material, botões de canto pixelado, estado como carimbo diagonal (tintas de carimbo `#007A33`/`#C42D10` ≥4.5:1). Registro em `DESIGN.md` (raiz); produto em `PRODUCT.md`; brief em `.impeccable/surfaces/apps-web.md`.

@@ -30,6 +30,8 @@
     <spring-cloud.version>2025.1.2</spring-cloud.version>
     <!-- Alinhado ao spring-boot-testcontainers 4.1.0 (Boot 4 não gerencia mais o Testcontainers) -->
     <testcontainers.version>2.0.5</testcontainers.version>
+    <!-- standalone: Jetty/Jackson vêm shaded, sem brigar com os do Boot 4 -->
+    <wiremock.version>3.13.1</wiremock.version>
   </properties>
 
   <dependencyManagement>
