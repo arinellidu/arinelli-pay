@@ -1,5 +1,7 @@
 /** Leitura server-side direto do BFF (ADR-003: o front não fala com o core). */
 
+import type { PessoaFisica, PessoaJuridica } from "@/lib/people-schema";
+
 const BFF_URL = process.env.BFF_URL ?? "http://localhost:3001";
 
 export interface Client {
@@ -61,6 +63,8 @@ export const bff = {
   client: (id: string) => get<Client>(`/bff/clients/${id}`),
   contractsOf: (clientId: string) => get<Contract[]>(`/bff/contracts?clientId=${clientId}`),
   invoices: (query: string) => get<InvoicePage>(`/bff/invoices${query ? `?${query}` : ""}`),
+  pessoasFisicas: () => get<PessoaFisica[]>("/bff/people/pf"),
+  pessoasJuridicas: () => get<PessoaJuridica[]>("/bff/people/pj"),
 };
 
 export async function generateNextInvoice(contractId: number): Promise<void> {

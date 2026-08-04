@@ -4,6 +4,14 @@ Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 
 ## [Unreleased]
 
+### Pessoas PF/PJ — telas de cadastro mock (2026-08-03)
+
+- Telas `/pessoas/fisicas` e `/pessoas/juridicas` (Next 16, mundo "instrumento de sinal") com o masthead ganhando os itens Pessoa Física/Jurídica (PF/PJ no mobile). Formulários em dialog `glass-deep` com **react-hook-form + zod**; obrigatórios primários: PF = nome + CPF; PJ = CNPJ + nome da empresa + e-mail e telefone de contato + **responsável legal** (uma PF já cadastrada, via select).
+- **Validação front e back sincronizadas por construção:** `people-schema.ts` é o MESMO arquivo espelhado em `apps/web/src/lib` e `apps/bff/src/people` — dígitos verificadores de CPF/CNPJ (algoritmo do P01), máscara removida na validação; o teste `people-schema.sync.spec.ts` compara os dois byte a byte. O 400 do BFF volta como `{ fieldErrors }` e cai no campo de origem via `setError`.
+- BFF: módulo `people` mock (memória do processo, seed sintético com 4 PF + 2 PJ), `ZodBody` pipe, `POST /bff/people/pf|pj` com 409 para documento repetido e 422 para responsável inexistente.
+- CEP automático: 8 dígitos disparam o ViaCEP e preenchem logradouro/bairro/cidade/UF (tudo editável e opcional); falha do lookup nunca trava o cadastro.
+- Testes: 39 no BFF (dígitos, schemas, controller, sync do espelho); builds web+bff verdes; fluxo completo verificado no browser (erro por campo, CEP, 5ª PF criada virando opção de responsável na PJ).
+
 ### P08 — Pix real na Efí (2026-08-02)
 
 - `EfiAdapter implements PixProvider` (I4): OAuth2 `client_credentials` **sobre mTLS** (`.p12` do painel, `EfiMtls`), cobrança imediata em `PUT /v2/cob/{txid}` com o txid NOSSO — repetir o PUT devolve a mesma cobrança, estendendo o I1 até dentro do PSP. EMV do `pixCopiaECola`, com fallback para `GET /v2/loc/{id}/qrcode`. Ligado por `PIX_PROVIDER=efi`; nenhum tipo HTTP/OAuth sai de `adapters/efi`.
