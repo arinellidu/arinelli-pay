@@ -23,9 +23,12 @@ function Mark() {
   );
 }
 
+/** No mobile os rótulos longos de pessoas viram PF/PJ para a barra não quebrar. */
 const routes = [
-  { href: "/clients", label: "Clientes" },
-  { href: "/invoices", label: "Faturas" },
+  { href: "/clients", label: "Clientes", short: "Clientes" },
+  { href: "/invoices", label: "Faturas", short: "Faturas" },
+  { href: "/pessoas/fisicas", label: "Pessoa Física", short: "PF" },
+  { href: "/pessoas/juridicas", label: "Pessoa Jurídica", short: "PJ" },
 ];
 
 export function Masthead() {
@@ -64,7 +67,13 @@ export function Masthead() {
                       : "text-read-soft hover:bg-white/6 hover:text-read",
                   )}
                 >
-                  {route.label}
+                  <span className="md:hidden" aria-hidden={route.short !== route.label}>
+                    {route.short}
+                  </span>
+                  <span className="hidden md:inline">{route.label}</span>
+                  {route.short !== route.label ? (
+                    <span className="sr-only md:hidden">{route.label}</span>
+                  ) : null}
                   {active ? (
                     <span
                       className="absolute inset-x-2 -bottom-px h-px bg-signal sm:inset-x-3"

@@ -20,3 +20,6 @@ playwright-report/
 # (.impeccable/surfaces/ continua versionado — aquilo e decisao de design)
 .claude/scheduled_tasks.lock
 .impeccable/critique/
+
+# artefatos do Playwright MCP (screenshots de inspeção)
+.playwright-mcp/
