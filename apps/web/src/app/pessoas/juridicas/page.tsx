@@ -9,9 +9,9 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Pessoas Jurídicas" };
 
 /**
- * Cadastro mock de pessoa jurídica: toda PJ nasce atrelada a uma pessoa física
- * já cadastrada — o responsável legal. O select do formulário lista as PF do
- * mock, e o BFF revalida o vínculo (422 se a PF não existir).
+ * Cadastro de pessoa jurídica persistido no billing-core: toda PJ nasce
+ * atrelada a uma pessoa física já cadastrada — o responsável legal, FK
+ * obrigatória no banco. O core revalida o vínculo (422 se a PF não existir).
  */
 export default async function PessoasJuridicasPage() {
   const [empresas, fisicas] = await Promise.all([
@@ -23,7 +23,7 @@ export default async function PessoasJuridicasPage() {
     <div>
       <PageHeader
         title="Pessoas Jurídicas"
-        note="Cadastro de demonstração na memória do BFF. CNPJ, nome da empresa, contato e responsável legal são obrigatórios — e o responsável precisa existir como pessoa física antes."
+        note="Cadastro persistido no billing-core. CNPJ, nome da empresa, contato e responsável legal são obrigatórios — e o responsável precisa existir como pessoa física antes (FK no banco)."
         readout={
           <ReadoutStrip>
             <Readout label="Cadastradas" value={empresas.length} />

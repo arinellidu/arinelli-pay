@@ -5,6 +5,7 @@ import br.com.arinelli.pay.billing.clients.DuplicateDocumentException;
 import br.com.arinelli.pay.billing.clients.InvalidDocumentException;
 import br.com.arinelli.pay.billing.contracts.ContractEndedException;
 import br.com.arinelli.pay.billing.contracts.ContractNotFoundException;
+import br.com.arinelli.pay.billing.people.ResponsibleNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -43,6 +44,14 @@ class ApiExceptionHandler {
     ProblemDetail contractEnded(ContractEndedException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         problem.setTitle("Contrato encerrado");
+        return problem;
+    }
+
+    @ExceptionHandler(ResponsibleNotFoundException.class)
+    ProblemDetail responsibleNotFound(ResponsibleNotFoundException ex) {
+        // 422, não 404: a rota existe e o corpo está bem formado — o estado do cadastro é que não fecha
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
+        problem.setTitle("Responsável legal não encontrado");
         return problem;
     }
 

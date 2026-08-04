@@ -9,9 +9,9 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Pessoas Físicas" };
 
 /**
- * Cadastro mock de pessoa física: a lista vive na memória do BFF, mas o
- * caminho é o real — form valida com zod, o POST revalida com o MESMO schema,
- * e CPF repetido morre com 409 apontando o campo.
+ * Cadastro de pessoa física persistido no billing-core (Postgres via Flyway).
+ * Form valida com zod, o BFF revalida com o MESMO schema e o core reconfere
+ * dígito verificador + unique — 409 volta apontando o campo.
  */
 export default async function PessoasFisicasPage() {
   const pessoas = await bff.pessoasFisicas();
@@ -20,7 +20,7 @@ export default async function PessoasFisicasPage() {
     <div>
       <PageHeader
         title="Pessoas Físicas"
-        note="Cadastro de demonstração: os registros vivem na memória do BFF e zeram no restart. Formulário e servidor validam com o mesmo schema zod — dígito verificador de CPF incluído."
+        note="Cadastro persistido no billing-core (Postgres, schema por Flyway). Formulário e servidor validam com o mesmo schema zod — dígito verificador de CPF incluído — e o unique do banco decide o duplicado."
         readout={
           <ReadoutStrip>
             <Readout label="Cadastradas" value={pessoas.length} />
