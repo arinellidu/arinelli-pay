@@ -4,6 +4,13 @@ Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 
 ## [Unreleased]
 
+### Pessoas PF/PJ — persistência no billing-core (2026-08-03)
+
+- Cadastro de pessoas sai do mock em memória e vira domínio do core (I6, SQL-first): migrations `0002_people.sql` (tabelas `natural_persons`/`legal_persons`, unique de documento, FK `responsible_id` NOT NULL) e `0003_seed_demo_people.sql` (seed de demonstração idempotente — `ON CONFLICT DO NOTHING` + `setval`; o seed que era código no BFF virou SQL versionado).
+- billing-core: entidades JPA em `validate` (endereço como `@Embeddable` único), `PeopleService` reusa o `DocumentValidator` do P01 (renormaliza e reconfere dígito — o core é a autoridade, mesmo com o BFF validando antes), unique do banco decide corrida de duplicado como em clients. `POST/GET /people/pf|pj`; responsável legal embutido no GET sem N+1 (`@EntityGraph`). 422 (`UNPROCESSABLE_CONTENT`, Framework 7) para responsável inexistente via `ApiExceptionHandler`.
+- BFF: `PeopleStore` morre; módulo vira proxy fino via gateway (ADR-003). `ZodBody` continua na frente (schema espelhado intacto) e a única tradução é de forma: ProblemDetail 409/422 do core vira o `{ fieldErrors }` que o formulário consome — mensagem no campo certo (cpf, cnpj, responsavelId).
+- Front: só as notas das telas (agora persistido). Verificado ao vivo: cadastro sobrevive a restart do BFF. Testes: 72 no billing-core (7 novos, Testcontainers + Flyway com o seed), 39 no BFF.
+
 ### Pessoas PF/PJ — telas de cadastro mock (2026-08-03)
 
 - Telas `/pessoas/fisicas` e `/pessoas/juridicas` (Next 16, mundo "instrumento de sinal") com o masthead ganhando os itens Pessoa Física/Jurídica (PF/PJ no mobile). Formulários em dialog `glass-deep` com **react-hook-form + zod**; obrigatórios primários: PF = nome + CPF; PJ = CNPJ + nome da empresa + e-mail e telefone de contato + **responsável legal** (uma PF já cadastrada, via select).

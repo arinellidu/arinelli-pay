@@ -1,39 +1,40 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import type { PessoaFisicaPayload, PessoaJuridicaPayload } from './people-schema';
 import { pessoaFisicaSchema, pessoaJuridicaSchema } from './people-schema';
-import { PeopleStore } from './people.store';
+import { PeopleService } from './people.service';
 import { ZodBody } from './zod-body.pipe';
 
 /**
- * Cadastro mock de pessoas (memória do BFF). Sem cache de leitura de
- * propósito: quem acabou de cadastrar precisa se ver na lista no refresh
- * seguinte, e a lista já mora no mesmo processo.
+ * Cadastro de pessoas: valida com o schema zod ESPELHADO do formulário
+ * (people-schema.ts) e repassa ao billing-core, que renormaliza e é a
+ * autoridade (unique de documento, FK do responsável). Sem cache de leitura:
+ * o refresh imediato pós-cadastro é o momento da tela.
  */
 @Controller('people')
 export class PeopleController {
-  constructor(private readonly store: PeopleStore) {}
+  constructor(private readonly service: PeopleService) {}
 
   @Get('pf')
   listFisicas() {
-    return this.store.listFisicas();
+    return this.service.listFisicas();
   }
 
   @Post('pf')
   createFisica(
     @Body(new ZodBody(pessoaFisicaSchema)) payload: PessoaFisicaPayload,
   ) {
-    return this.store.addFisica(payload);
+    return this.service.createFisica(payload);
   }
 
   @Get('pj')
   listJuridicas() {
-    return this.store.listJuridicas();
+    return this.service.listJuridicas();
   }
 
   @Post('pj')
   createJuridica(
     @Body(new ZodBody(pessoaJuridicaSchema)) payload: PessoaJuridicaPayload,
   ) {
-    return this.store.addJuridica(payload);
+    return this.service.createJuridica(payload);
   }
 }
