@@ -14,10 +14,10 @@ export default function Error({
   return (
     <div className="glass rounded-xl px-6 py-16 text-center">
       <p className="text-2xl font-semibold tracking-[-0.01em] text-alert">
-        Sem sinal do BFF
+        Falha de comunicação
       </p>
       <p className="mx-auto mt-3 max-w-[54ch] text-sm leading-relaxed text-read-soft">
-        A tela não conseguiu ler o backend. A stack local precisa estar inteira
+        A tela não conseguiu consultar o BFF. A stack local precisa estar inteira
         de pé: compose (Postgres e Redis), billing-core, payments-core, gateway
         e BFF.
       </p>

@@ -34,7 +34,7 @@ export async function cadastrarPessoa(
       fieldErrors: body?.fieldErrors,
     };
   } catch {
-    return { ok: false, message: "Sem sinal do BFF — tente de novo" };
+    return { ok: false, message: "Não foi possível consultar o BFF — tente de novo" };
   }
 }
 

@@ -1,9 +1,9 @@
-// Grava o loop do aceite: cobrar via Pix → QR real → webhook assinado →
-// selo de liquidação + varredura do campo de sinal → card carimbado sem reload.
+// Grava o fluxo de portfólio completo pela interface:
+// pessoa cadastrada → cliente → contrato → fatura → Pix → webhook → PAGA.
 //
-// Provisiona os próprios dados a cada rodada (CPF válido gerado), então é
-// regravável do zero: `node scripts/demo-gif.mjs <dir-de-saida>`.
-// Pré-requisito: stack local inteira de pé (compose + cores + gateway + BFF + web + worker).
+// A pessoa sintética é provisionada pela API porque o foco do filme é o CRM
+// de cobrança. Cliente, contrato, fatura e cobrança nascem pela própria UI.
+// Uso: `node scripts/demo-gif.mjs <dir-de-saida>` com a stack local completa.
 import { chromium } from "playwright";
 import { createHmac } from "node:crypto";
 
@@ -14,7 +14,6 @@ const GATEWAY = process.env.GATEWAY_URL ?? "http://localhost:8090";
 const PAYMENTS = process.env.PAYMENTS_URL ?? "http://localhost:8082";
 const secret = process.env.WEBHOOK_HMAC_SECRET ?? "change-me";
 
-/** CPF válido novo por rodada: 9 dígitos aleatórios + DVs reais (mod 11). */
 function generateValidCpf() {
   const digits = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10));
   if (new Set(digits).size === 1) digits[0] = (digits[0] + 1) % 10;
@@ -39,30 +38,21 @@ async function post(url, data) {
   return response.json();
 }
 
-// ── dados da rodada: cliente + contrato + fatura aberta ────────────────────
 const stamp = Date.now().toString().slice(-6);
-const client = await post(`${BFF}/bff/clients`, {
-  document: generateValidCpf(),
-  name: `Estúdio Meridiano ${stamp}`,
-  email: `contato${stamp}@meridiano.studio`,
-});
-const contract = await post(`${BFF}/bff/contracts`, {
-  clientId: client.id,
-  title: "Identidade visual — parcelas",
-  amount: 2400.0,
-  billingDay: 20,
-});
-const invoice = await post(`${BFF}/bff/contracts/${contract.id}/invoices:generate-next`);
-const invoiceNumber = String(invoice.id).padStart(4, "0");
-console.log(`fatura ${invoiceNumber} criada para ${client.name}`);
+const cpf = generateValidCpf();
+const personName = `Marina Costa ${stamp}`;
+const contractTitle = "Direção criativa mensal";
 
-// o BFF cacheia a lista de clientes por 5s; sem esperar essa janela o filtro
-// Cliente abre mostrando o id cru em vez do nome recém-criado
-await new Promise((resolve) => setTimeout(resolve, 7000));
+await post(`${BFF}/bff/people/pf`, {
+  nome: personName,
+  cpf,
+  email: `marina${stamp}@costastudio.com.br`,
+  telefone: "11987654321",
+  cidade: "São Paulo",
+  uf: "SP",
+});
+console.log(`pessoa ${personName} provisionada`);
 
-// ── browser ───────────────────────────────────────────────────────────────
-// o campo de fundo é WebGL2: sem SwiftShader liberado o headless entrega uma
-// tela chapada e o vídeo perde exatamente o que ele existe para mostrar
 const browser = await chromium.launch({
   args: ["--enable-unsafe-swiftshader", "--force-device-scale-factor=1"],
 });
@@ -72,27 +62,70 @@ const context = await browser.newContext({
   recordVideo: { dir: outDir, size: { width: 1280, height: 800 } },
 });
 const page = await context.newPage();
-// o indicador de devtools do Next não faz parte do produto — fora do quadro
-await page.addStyleTag({
-  content: "nextjs-portal, [data-nextjs-toast] { display: none !important; }",
-}).catch(() => {});
+const hideDevtools = async () => {
+  await page
+    .addStyleTag({ content: "nextjs-portal, [data-nextjs-toast] { display: none !important; }" })
+    .catch(() => {});
+};
 
-await page.goto(`${WEB}/invoices?clientId=${client.id}`, { waitUntil: "networkidle" });
-await page.addStyleTag({
-  content: "nextjs-portal, [data-nextjs-toast] { display: none !important; }",
-});
-const card = page.locator("article", { hasText: `Fatura ${invoiceNumber}` });
-await card.waitFor();
-await page.waitForTimeout(1800);
+// 1. O CPF já cadastrado vira cliente pela interface.
+await page.goto(`${WEB}/clients`, { waitUntil: "networkidle" });
+await hideDevtools();
+await page.waitForTimeout(1200);
+await page.getByRole("button", { name: "Novo cliente" }).click();
+const clientDialog = page.getByRole("dialog");
+const candidateValue = await clientDialog
+  .locator("option")
+  .filter({ hasText: personName })
+  .getAttribute("value");
+if (!candidateValue) throw new Error("pessoa provisionada não apareceu no cadastro de cliente");
+await clientDialog.getByLabel("Pessoa cadastrada").selectOption(candidateValue);
+await page.waitForTimeout(900);
+await clientDialog.getByRole("button", { name: "Cadastrar cliente" }).click();
+await page.waitForURL(/\/clients\/\d+$/);
+await page.getByRole("heading", { name: personName }).waitFor();
+const clientId = Number(new URL(page.url()).pathname.split("/").pop());
+await page.waitForTimeout(1200);
 
-// Cobrar via Pix — a Idempotency-Key nasce no client (uuid)
-await card.getByRole("button", { name: "Cobrar via Pix" }).click();
-const dialog = page.getByRole("dialog");
-await dialog.waitFor();
-await dialog.locator("canvas").waitFor(); // QR do EMV real, com CRC16
-await page.waitForTimeout(2600);
+// 2. O contrato nasce vinculado ao cliente e abre sua página própria.
+await page.getByRole("button", { name: "Novo contrato" }).click();
+const contractDialog = page.getByRole("dialog");
+await contractDialog.getByLabel("Título").fill(contractTitle);
+await contractDialog.getByLabel("Valor mensal").fill("2400,00");
+await contractDialog.getByLabel("Dia").fill("20");
+await page.waitForTimeout(700);
+await contractDialog.getByRole("button", { name: "Criar contrato" }).click();
+await page.waitForURL(/\/contracts\/\d+$/);
+await page.getByRole("heading", { name: contractTitle }).waitFor();
+const contractId = Number(new URL(page.url()).pathname.split("/").pop());
+await page.waitForTimeout(1400);
 
-// pagamento simulado: webhook assinado (HMAC sobre o corpo cru) no gateway
+// 3. A primeira fatura é gerada pela ação do contrato.
+await page.getByRole("button", { name: "Gerar próxima fatura" }).click();
+await page.getByText(/Próximo vencimento/).waitFor();
+await page.waitForTimeout(900);
+
+const invoicePage = await (
+  await fetch(`${BFF}/bff/invoices?clientId=${clientId}&size=20`)
+).json();
+const invoice = invoicePage.content.find((item) => item.contract.id === contractId);
+if (!invoice) throw new Error("fatura recém-gerada não encontrada");
+const invoiceNumber = String(invoice.id).padStart(4, "0");
+
+await page.getByRole("link", { name: /Ver faturas/ }).click();
+await page.waitForURL(/\/invoices/);
+await page.goto(`${WEB}/invoices?clientId=${clientId}&view=table`, { waitUntil: "networkidle" });
+const record = page.locator("tbody tr", { hasText: invoiceNumber });
+await record.waitFor();
+await page.waitForTimeout(1400);
+
+// 4. Cobrança Pix e QR com EMV real.
+await record.getByRole("button", { name: "Cobrar via Pix" }).click();
+const pixDialog = page.getByRole("dialog");
+await pixDialog.locator("canvas").waitFor();
+await page.waitForTimeout(2200);
+
+// 5. O webhook HMAC e o worker liquidam; a UI descobre pelo polling.
 const charges = await (await fetch(`${PAYMENTS}/invoices/${invoice.id}/charges`)).json();
 const txid = charges[charges.length - 1].providerRef;
 const body = JSON.stringify({ e2eId: `GIF-${invoice.id}-${stamp}`, txid, status: "CONCLUIDA" });
@@ -102,19 +135,19 @@ const webhook = await fetch(`${GATEWAY}/api/payments/webhooks/pix`, {
   headers: { "Content-Type": "application/json", "X-Signature": signature },
   body,
 });
+if (!webhook.ok) throw new Error(`webhook respondeu ${webhook.status}`);
 console.log("webhook:", (await webhook.json()).result);
 
-// o polling de 3s traz o estado; o selo cai e o campo varre a tela
-await dialog.getByLabel(/^Paga —/).waitFor({ timeout: 20_000 });
-await page.waitForTimeout(2600);
-
-// Esc fecha o painel; só então o refresh adiado repinta a lista
+await pixDialog.getByLabel(/^Paga —/).waitFor({ timeout: 30_000 });
+await page.waitForTimeout(2000);
+// A listagem do BFF tem uma janela curta de cache. Deixamos o selo em cena
+// enquanto ela expira e então relemos a página para encerrar no estado PAGA.
+await page.waitForTimeout(3500);
 await page.keyboard.press("Escape");
-const closedAt = Date.now();
-await card.getByText("PAGA", { exact: true }).waitFor({ timeout: 60_000 });
-console.log(`etiqueta PAGA no card em ${Date.now() - closedAt}ms`);
-await page.waitForTimeout(2400);
+await page.reload({ waitUntil: "networkidle" });
+await record.getByText("PAGA", { exact: true }).waitFor({ timeout: 30_000 });
+await page.waitForTimeout(2200);
 
 await context.close();
 await browser.close();
-console.log("video gravado em", outDir);
+console.log("vídeo gravado em", outDir);

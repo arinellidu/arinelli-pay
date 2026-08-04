@@ -5,20 +5,18 @@ primary_target: "apps/web"
 related_targets: []
 ---
 
-# Superfície: app web (apps/web — /clients, /clients/[id], /invoices)
+# Superfície: app web (apps/web — clientes, contratos, faturas e pessoas)
 
-Modo: Operate. Visitante: avaliador técnico em demo de ~3min; persona emprestada: prestador BR cobrando clientes.
+Modo: Operate. Visitante: avaliador técnico em demo de ~3min; persona emprestada: prestador brasileiro cobrando clientes recorrentes.
 
-Tarefa: ler carteira (clientes→contratos→faturas), cobrar via Pix, ver liquidação ao vivo (polling 3s) sem reload.
+Tarefa: ler CPF/CNPJ → cliente → contrato → fatura, cobrar via Pix e ver a liquidação real chegar por polling sem reload.
 
-Direção escolhida (2026-08-02, redesign): **Instrumento de sinal** — o mundo anterior (specimen bitmap Emigre, papel/tinta) foi substituído a pedido do usuário. Chassi escuro sob campo de fósforo em WebGL, painéis de vidro de cobertura, um acento de fósforo #00DC5A; Archivo na interface e Azeret Mono em toda medição; shadcn/ui (base-nova) como substrato de componente; Framer Motion só no momento da liquidação.
+Direção escolhida (2026-08-04, redesign): **Registro Executivo** — substitui o antigo “Instrumento de sinal”. Preto e grafite, cinza frio e ouro funcional; Archivo na linguagem e Azeret Mono apenas em dados. A composição aprovada A+B combina ledger horizontal de faturas com cadastro persistente de contratos.
 
-Momento memorável: o painel de cobrança — QR real, e quando o webhook liquida o selo PAGA cai com spring enquanto uma varredura de fósforo atravessa a tela inteira.
+Momento memorável: o diálogo Pix mantém QR e valor em foco; quando o webhook/outbox/worker confirma PAID, um selo Motion cai e uma única varredura WebGL dourada atravessa a tela. Fora do settlement, o canvas é transparente.
 
-Regra que nasceu do build: o campo WebGL é acionado por eventos reais via `lib/signal.ts` (`holdPending` / `announcePoll` / `announceSettlement`). Nenhum trilho novo inventa animação própria — emite os mesmos três sinais.
+Gesto nativo: tabela é a leitura padrão; `?view=cards|table` preserva alternativa, filtros e paginação na querystring. No mobile, registros empilham e cinco destinos migram para navegação inferior fixa.
 
-Gesto nativo: toggle ?view=cards|table (painéis de vidro ⇄ tabela densa). Filtros/estado na querystring com GET nativo; Server Components na leitura; Idempotency-Key nasce no client (uuid).
+Restrições: PT-BR, BRL, dd/mm/aaaa; BOLETO/CARD só vocabulário; Idempotency-Key nasce no client; polling de 3s só para PENDING; PAGA nunca é simulado no front (I1/I7).
 
-Restrições: PT-BR, R$, dd/mm/aaaa; trilhos BOLETO/CARD só vocabulário; nunca simular estado no front (I7); `<body>` não pode ter fundo (o canvas do campo fica em z-index -10).
-
-Não resolvido: o GIF do README ainda está gravado no mundo antigo (specimen bitmap) — precisa ser regravado. Boleto/cartão entram P09/P10.
+Não resolvido: boleto e cartão entram em P09/P10; a direção deve ser estendida sem criar uma cor ou animação por trilho.

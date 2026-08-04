@@ -4,9 +4,9 @@ Multi-rail billing SaaS — **Pix · boleto/QR · card** — with a minimal CRM 
 
 ![Automated demo](docs/demo.gif)
 
-*One real loop, no mocks: invoice → Pix QR (valid EMV) → simulated payment → HMAC-verified webhook → outbox → Go worker → invoice settles live via 3s polling. The background field is driven by those same events — it only moves because the backend answered.*
+*One real loop, no mocks: registered CPF → client → contract → invoice → Pix QR (valid EMV) → simulated payment → HMAC-verified webhook → outbox → Go worker → invoice settles live via 3s polling. The gold settlement sweep is driven by that same confirmed event — it never simulates success.*
 
-Recorded by `apps/web/scripts/demo-gif.mjs` against the full local stack (it provisions its own client, contract and invoice, so it is rerunnable from scratch); `apps/web/e2e/demo.spec.ts` asserts the same loop as a test.
+Recorded by `apps/web/scripts/demo-gif.mjs` against the full local stack. It provisions one synthetic person, then creates the client, contract, invoice and Pix charge through the UI, so the portfolio film is rerunnable from scratch. `apps/web/e2e/demo.spec.ts` independently asserts the settlement loop.
 
 **Runtime boundaries by responsibility:** Java 25 LTS / Spring Boot 4.1 (Framework 7) for the transactional core and gateway, Go 1.26 for concurrent workers (outbox, reconciliation), NestJS 11 as a thin BFF, Next.js 16 (React 19.2) for the UI, PostgreSQL 17 throughout.
 

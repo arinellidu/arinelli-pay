@@ -28,7 +28,7 @@ async function post(path: string, payload: unknown): Promise<PortfolioResult> {
       message: message ?? `Não foi possível concluir (HTTP ${response.status})`,
     };
   } catch {
-    return { ok: false, message: "Sem sinal do BFF. Tente novamente." };
+    return { ok: false, message: "Não foi possível consultar o BFF. Tente novamente." };
   }
 }
 

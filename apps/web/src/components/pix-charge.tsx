@@ -208,7 +208,7 @@ function PixDialog({
         errorCorrectionLevel: "M",
         margin: 1,
         scale: 6,
-        color: { dark: "#07090b", light: "#e9eeeb" },
+        color: { dark: "#080808", light: "#f1f1ee" },
       });
     },
     [emv],
@@ -245,7 +245,7 @@ function PixDialog({
             </p>
             <div className="relative mt-2 flex items-end justify-between gap-4">
               <motion.span
-                animate={{ color: settled ? "#00dc5a" : "#e9eeeb" }}
+                animate={{ color: settled ? "#c5a461" : "#f1f1ee" }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               >
                 <Money value={amount} className="text-[2.5rem] leading-none font-medium" />

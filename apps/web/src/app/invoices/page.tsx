@@ -30,7 +30,7 @@ export default async function InvoicesPage({
   searchParams: Promise<Search>;
 }) {
   const params = await searchParams;
-  const view = params.view === "table" ? "table" : "cards";
+  const view = params.view === "cards" ? "cards" : "table";
 
   const upstream = new URLSearchParams();
   if (params.status) upstream.set("status", params.status);

@@ -2,91 +2,75 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "motion/react";
+import { BriefcaseBusiness, Building2, FileText, ReceiptText, UsersRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** Marca desenhada: a onda que o aparelho lê, dentro do seu próprio aro. */
-function Mark() {
+const routes = [
+  { href: "/clients", label: "Clientes", icon: UsersRound },
+  { href: "/contracts", label: "Contratos", icon: FileText },
+  { href: "/invoices", label: "Faturas", icon: ReceiptText },
+  { href: "/pessoas/fisicas", label: "Pessoas físicas", short: "PF", icon: BriefcaseBusiness },
+  { href: "/pessoas/juridicas", label: "Pessoas jurídicas", short: "PJ", icon: Building2 },
+];
+
+function Brand() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className="size-6 shrink-0"
-      aria-hidden
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="2.5" y="2.5" width="19" height="19" rx="5" className="opacity-35" />
-      <path d="M6 13.4c1.6 0 1.9-4.2 3.4-4.2 1.6 0 1.6 6.6 3.2 6.6 1.5 0 1.9-4.6 3.3-4.6.9 0 1.3 1.6 2.1 1.6" />
-    </svg>
+    <Link href="/invoices" className="group flex items-center gap-3" aria-label="Arinelli Pay — Faturas">
+      <span className="grid size-8 place-items-center border border-signal/55 bg-signal/8 text-sm font-semibold text-signal shadow-[inset_0_1px_0_rgb(255_255_255/12%)] transition-colors group-hover:bg-signal group-hover:text-black">A</span>
+      <span className="leading-none">
+        <span className="block text-sm font-semibold tracking-[0.16em] uppercase">Arinelli</span>
+        <span className="mt-1 block text-[9px] tracking-[0.34em] text-read-faint uppercase">Pay Registry</span>
+      </span>
+    </Link>
   );
 }
 
-/** No mobile os rótulos longos de pessoas viram PF/PJ para a barra não quebrar. */
-const routes = [
-  { href: "/clients", label: "Clientes", short: "Clientes" },
-  { href: "/contracts", label: "Contratos", short: "Contratos" },
-  { href: "/invoices", label: "Faturas", short: "Faturas" },
-  { href: "/pessoas/fisicas", label: "Pessoa Física", short: "PF" },
-  { href: "/pessoas/juridicas", label: "Pessoa Jurídica", short: "PJ" },
-];
+function NavItems({ mobile = false }: { mobile?: boolean }) {
+  const pathname = usePathname();
+  return routes.map((route) => {
+    const active = pathname.startsWith(route.href);
+    const Icon = route.icon;
+    return (
+      <Link
+        key={route.href}
+        href={route.href}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "relative flex items-center justify-center transition-colors",
+          mobile ? "min-w-0 flex-1 flex-col gap-1 px-1 py-2 text-[9px] tracking-[0.08em] uppercase" : "gap-2 px-3 py-2 text-[11px] font-medium tracking-[0.12em] uppercase",
+          active ? "text-signal" : "text-read-soft hover:text-read",
+        )}
+      >
+        {mobile ? <Icon className="size-4" aria-hidden /> : null}
+        <span className={mobile ? "max-w-full truncate" : ""}>{mobile ? route.short ?? route.label : route.label}</span>
+        {active ? (
+          <motion.span
+            layoutId={mobile ? "mobile-route" : "desktop-route"}
+            className={cn("absolute bg-signal", mobile ? "inset-x-3 top-0 h-px" : "inset-x-3 -bottom-px h-px")}
+            transition={{ type: "spring", stiffness: 420, damping: 34 }}
+          />
+        ) : null}
+      </Link>
+    );
+  });
+}
 
 export function Masthead() {
-  const pathname = usePathname();
-
   return (
-    <header className="sticky top-0 z-40">
-      {/* mesma receita do vidro dos painéis, mas rente ao topo: sem aro, só a
-          aresta de luz e a borda inferior */}
-      <div className="border-b border-white/10 bg-white/6 shadow-[inset_0_1px_0_0_rgb(255_255_255/12%),0_10px_30px_-24px_rgb(0_0_0/90%)] backdrop-blur-xl backdrop-saturate-150">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:gap-6 sm:px-6">
-          <Link
-            href="/invoices"
-            className="flex min-w-0 items-center gap-2 text-read hover:text-signal sm:gap-2.5"
-          >
-            <span className="text-signal">
-              <Mark />
-            </span>
-            <span className="truncate text-[13px] font-semibold tracking-[0.12em] uppercase sm:text-[15px] sm:tracking-[0.14em]">
-              Arinelli&nbsp;Pay
-            </span>
-          </Link>
-
-          <nav className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-            {routes.map((route) => {
-              const active = pathname.startsWith(route.href);
-              return (
-                <Link
-                  key={route.href}
-                  href={route.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "relative rounded-md px-2 py-1.5 text-xs font-medium tracking-[0.08em] uppercase transition-colors sm:px-3 sm:text-[13px] sm:tracking-[0.1em]",
-                    active
-                      ? "text-signal"
-                      : "text-read-soft hover:bg-white/6 hover:text-read",
-                  )}
-                >
-                  <span className="md:hidden" aria-hidden={route.short !== route.label}>
-                    {route.short}
-                  </span>
-                  <span className="hidden md:inline">{route.label}</span>
-                  {route.short !== route.label ? (
-                    <span className="sr-only md:hidden">{route.label}</span>
-                  ) : null}
-                  {active ? (
-                    <span
-                      className="absolute inset-x-2 -bottom-px h-px bg-signal sm:inset-x-3"
-                      aria-hidden
-                    />
-                  ) : null}
-                </Link>
-              );
-            })}
-          </nav>
+    <>
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-chassis/78 backdrop-blur-2xl">
+        <div className="mx-auto flex h-[68px] w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Brand />
+          <nav className="hidden items-center md:flex" aria-label="Navegação principal"><NavItems /></nav>
+          <div className="hidden items-center gap-2 text-[10px] tracking-[0.14em] text-read-faint uppercase xl:flex">
+            <span className="size-1.5 bg-signal shadow-[0_0_8px_rgb(197_164_97/70%)]" /> Operação local
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+      <nav className="fixed inset-x-3 bottom-3 z-40 flex overflow-hidden border border-white/12 bg-chassis/88 shadow-2xl backdrop-blur-2xl md:hidden" aria-label="Navegação principal">
+        <NavItems mobile />
+      </nav>
+    </>
   );
 }

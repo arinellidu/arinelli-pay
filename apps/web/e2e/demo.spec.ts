@@ -64,13 +64,13 @@ test("demo: fatura → QR Pix → pagamento simulado → selo PAGA sem reload", 
   const invoiceNumber = String(invoice.id).padStart(4, "0");
 
   // o vídeo começa aqui: carteira do cliente com a fatura ABERTA
-  await page.goto(`/invoices?clientId=${client.id}`, { waitUntil: "networkidle" });
-  const card = page.locator("article", { hasText: `Fatura ${invoiceNumber}` });
-  await expect(card).toBeVisible();
+  await page.goto(`/invoices?clientId=${client.id}&view=table`, { waitUntil: "networkidle" });
+  const record = page.locator("tbody tr", { hasText: invoiceNumber });
+  await expect(record).toBeVisible();
   await page.waitForTimeout(1200);
 
   // Cobrar via Pix — Idempotency-Key nasce no client (uuid)
-  await card.getByRole("button", { name: "Cobrar via Pix" }).click();
+  await record.getByRole("button", { name: "Cobrar via Pix" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await expect(dialog.locator("canvas")).toBeVisible(); // QR do EMV real
@@ -96,9 +96,14 @@ test("demo: fatura → QR Pix → pagamento simulado → selo PAGA sem reload", 
   await expect(dialog.getByLabel(/^Paga —/)).toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(1500);
 
-  // Esc fecha o painel; só então o refresh adiado repinta a lista (se o refresh
-  // rodasse durante a liquidação, o card sairia da listagem e mataria o selo)
+  // O selo chegou sem reload. Depois de a janela curta da lista expirar, Esc
+  // fecha o painel e uma releitura confirma o mesmo estado no ledger.
+  await page.waitForTimeout(5_500);
   await page.keyboard.press("Escape");
-  await expect(card.getByText("PAGA", { exact: true })).toBeVisible({ timeout: 30_000 });
+  await page.reload({ waitUntil: "networkidle" });
+  const settledRecord = page.locator("tbody tr", { hasText: invoiceNumber });
+  await expect(settledRecord.getByText("PAGA", { exact: true })).toBeVisible({
+    timeout: 30_000,
+  });
   await page.waitForTimeout(2000); // pausa final na etiqueta
 });

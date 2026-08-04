@@ -1,11 +1,10 @@
 /**
- * Barramento de sinal do instrumento.
+ * Barramento de eventos da cobrança.
  *
- * O campo WebGL do fundo não é wallpaper: ele é acionado por eventos reais do
- * backend. Quem cria uma cobrança segura um `pending`; cada batida do polling
- * de 3s emite um `poll`; a liquidação confirmada pelo webhook emite `settled`.
- * Nada aqui inventa estado — se o campo se move, alguma coisa aconteceu de
- * verdade do outro lado (I7).
+ * Quem cria uma cobrança segura um pending; cada resposta do polling emite
+ * poll; a liquidação confirmada pelo webhook emite settled. A varredura WebGL
+ * escuta somente settled; os demais eventos ficam disponíveis para indicadores
+ * de atividade sem inventar estado no front (I7).
  */
 
 const PENDING = "arinelli:pending";

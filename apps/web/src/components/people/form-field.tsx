@@ -52,7 +52,7 @@ export function TextField({
   label,
   optional,
   error,
-  registration,
+  registration: { name, ref, onBlur, onChange },
   mask,
   className,
   ...inputProps
@@ -63,7 +63,7 @@ export function TextField({
   registration: UseFormRegisterReturn;
   mask?: (value: string) => string;
 }) {
-  const id = inputProps.id ?? registration.name;
+  const id = inputProps.id ?? name;
   const errorId = `${id}-erro`;
 
   return (
@@ -74,14 +74,14 @@ export function TextField({
       <input
         {...inputProps}
         id={id}
-        name={registration.name}
-        ref={registration.ref}
-        onBlur={registration.onBlur}
+        name={name}
+        ref={ref}
+        onBlur={onBlur}
         onChange={(event) => {
           if (mask) {
             event.target.value = mask(event.target.value);
           }
-          void registration.onChange(event);
+          void onChange(event);
         }}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}

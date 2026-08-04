@@ -7,8 +7,8 @@ import { PixChargeButton } from "./pix-charge";
 import { ChargeState, InvoiceStatus, RailBadge } from "./status-badge";
 
 /**
- * Painel de fatura sob vidro de cobertura: a leitura do valor domina, o estado
- * é etiqueta, e o painel ganha aresta de fósforo enquanto a cobrança está viva.
+ * Visão em painéis do mesmo registro: valor, estado e ação preservam a
+ * hierarquia do ledger; uma aresta dourada marca a cobrança viva.
  */
 export function InvoiceCards({ invoices }: { invoices: BffInvoice[] }) {
   return (
