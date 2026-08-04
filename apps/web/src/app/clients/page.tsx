@@ -4,6 +4,7 @@ import { bff } from "@/lib/bff";
 import { PageHeader, Readout, ReadoutStrip } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { documentMask } from "@/lib/format";
+import { ClientForm, type ClientCandidate } from "@/components/client-form";
 
 export const dynamic = "force-dynamic";
 
@@ -11,13 +12,34 @@ export const metadata = { title: "Clientes" };
 
 /** Índice da carteira: uma leitura por cliente, todas no mesmo painel de vidro. */
 export default async function ClientsPage() {
-  const clients = await bff.clients();
+  const [clients, pessoasFisicas, pessoasJuridicas] = await Promise.all([
+    bff.clients(),
+    bff.pessoasFisicas(),
+    bff.pessoasJuridicas(),
+  ]);
+  const documentsInPortfolio = new Set(clients.map((client) => client.document));
+  const candidates: ClientCandidate[] = [
+    ...pessoasFisicas.map((pessoa) => ({
+      key: `pf-${pessoa.id}`,
+      document: pessoa.cpf,
+      documentType: "CPF" as const,
+      name: pessoa.nome,
+      email: pessoa.email,
+    })),
+    ...pessoasJuridicas.map((pessoa) => ({
+      key: `pj-${pessoa.id}`,
+      document: pessoa.cnpj,
+      documentType: "CNPJ" as const,
+      name: pessoa.nomeFantasia || pessoa.razaoSocial,
+      email: pessoa.emailContato,
+    })),
+  ].filter((candidate) => !documentsInPortfolio.has(candidate.document));
 
   return (
     <div>
       <PageHeader
         title="Clientes"
-        note="CPF e CNPJ são validados por dígito verificador no core; documento duplicado morre com 409 antes de virar linha aqui."
+        note="Clientes nascem de pessoas físicas e jurídicas já cadastradas. Cada CPF ou CNPJ entra uma única vez na carteira e pode concentrar vários contratos."
         readout={
           <ReadoutStrip>
             <Readout label="Na carteira" value={clients.length} />
@@ -25,14 +47,20 @@ export default async function ClientsPage() {
         }
       />
 
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-3">
+        {candidates.length === 0 && pessoasFisicas.length + pessoasJuridicas.length > 0 ? (
+          <span className="text-xs text-read-faint">
+            Todos os documentos cadastrados já estão na carteira.
+          </span>
+        ) : null}
+        <ClientForm candidates={candidates} />
+      </div>
+
       {clients.length === 0 ? (
         <div className="glass rounded-xl px-6 py-16 text-center">
           <p className="text-2xl font-semibold tracking-[-0.01em]">Carteira vazia</p>
           <p className="mx-auto mt-3 max-w-[46ch] text-sm text-read-soft">
-            Cadastre pelo BFF:{" "}
-            <code className="readout rounded bg-black/35 px-1.5 py-0.5 text-xs">
-              POST /bff/clients
-            </code>
+            Cadastre primeiro uma pessoa física ou jurídica e use “Novo cliente” para adicioná-la.
           </p>
         </div>
       ) : (

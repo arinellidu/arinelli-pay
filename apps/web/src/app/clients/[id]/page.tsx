@@ -9,6 +9,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { ViewToggle } from "@/components/view-toggle";
 import { Badge } from "@/components/ui/badge";
 import { dateShort, documentMask } from "@/lib/format";
+import { ContractForm } from "@/components/contract-form";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export default async function ClientPage({
 
   const client = await bff.client(id).catch(() => null);
   if (!client) notFound();
-  const contracts = await bff.contractsOf(id);
+  const [contracts, clients] = await Promise.all([bff.contractsOf(id), bff.clients()]);
 
   async function generate(formData: FormData) {
     "use server";
@@ -70,6 +71,7 @@ export default async function ClientPage({
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-xl font-semibold tracking-[-0.01em]">Contratos</h2>
         <div className="flex flex-wrap items-center gap-4">
+          <ContractForm clients={clients} initialClientId={client.id} />
           <Link
             href={`/invoices?clientId=${client.id}`}
             className="inline-flex items-center gap-1.5 text-xs text-read-soft underline decoration-white/20 underline-offset-4 hover:text-signal hover:decoration-signal/50"
@@ -85,10 +87,7 @@ export default async function ClientPage({
         <div className="glass rounded-xl px-6 py-14 text-center">
           <p className="text-xl font-semibold tracking-[-0.01em]">Sem contratos</p>
           <p className="mx-auto mt-2 max-w-[46ch] text-sm text-read-soft">
-            Crie pelo BFF:{" "}
-            <code className="readout rounded bg-black/35 px-1.5 py-0.5 text-xs">
-              POST /bff/contracts
-            </code>
+            Use “Novo contrato” para definir a primeira cobrança recorrente deste cliente.
           </p>
         </div>
       ) : view === "table" ? (
@@ -128,7 +127,12 @@ function ContractsCards({
       {contracts.map((contract) => (
         <article key={contract.id} className="glass flex flex-col rounded-xl">
           <div className="flex items-center justify-between gap-3 border-b border-white/8 px-4 py-3">
-            <p className="line-clamp-1 text-sm font-medium">{contract.title}</p>
+            <Link
+              href={`/contracts/${contract.id}`}
+              className="line-clamp-1 text-sm font-medium hover:text-signal"
+            >
+              {contract.title}
+            </Link>
             <ContractStatus status={contract.status} />
           </div>
           <div className="flex-1 px-4 py-4">
@@ -199,7 +203,11 @@ function ContractsTable({
                 <td className="readout px-3 py-3 text-xs text-read-faint">
                   {String(contract.id).padStart(4, "0")}
                 </td>
-                <td className="px-3 py-3">{contract.title}</td>
+                <td className="px-3 py-3">
+                  <Link href={`/contracts/${contract.id}`} className="hover:text-signal">
+                    {contract.title}
+                  </Link>
+                </td>
                 <td className="px-3 py-3 text-right">
                   <Money value={contract.amount} className="text-sm" />
                 </td>

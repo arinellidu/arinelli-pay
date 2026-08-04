@@ -8,7 +8,7 @@ export default function NotFound() {
     <div className="glass rounded-xl px-6 py-16 text-center">
       <p className="text-2xl font-semibold tracking-[-0.01em]">Fora de escala</p>
       <p className="mx-auto mt-3 max-w-[48ch] text-sm leading-relaxed text-read-soft">
-        Esta página não existe — ou o identificador de cliente ou fatura foi
+        Esta página não existe — ou o identificador de cliente, contrato ou fatura foi
         digitado errado.
       </p>
       <Link

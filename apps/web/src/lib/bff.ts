@@ -61,6 +61,8 @@ async function get<T>(path: string): Promise<T> {
 export const bff = {
   clients: () => get<Client[]>("/bff/clients"),
   client: (id: string) => get<Client>(`/bff/clients/${id}`),
+  contracts: () => get<Contract[]>("/bff/contracts"),
+  contract: (id: string) => get<Contract>(`/bff/contracts/${id}`),
   contractsOf: (clientId: string) => get<Contract[]>(`/bff/contracts?clientId=${clientId}`),
   invoices: (query: string) => get<InvoicePage>(`/bff/invoices${query ? `?${query}` : ""}`),
   pessoasFisicas: () => get<PessoaFisica[]>("/bff/people/pf"),

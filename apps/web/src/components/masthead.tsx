@@ -26,6 +26,7 @@ function Mark() {
 /** No mobile os rótulos longos de pessoas viram PF/PJ para a barra não quebrar. */
 const routes = [
   { href: "/clients", label: "Clientes", short: "Clientes" },
+  { href: "/contracts", label: "Contratos", short: "Contratos" },
   { href: "/invoices", label: "Faturas", short: "Faturas" },
   { href: "/pessoas/fisicas", label: "Pessoa Física", short: "PF" },
   { href: "/pessoas/juridicas", label: "Pessoa Jurídica", short: "PJ" },
