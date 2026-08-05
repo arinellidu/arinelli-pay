@@ -31,13 +31,13 @@ export default async function ContractsPage() {
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
         <section aria-label="Registro de contratos">
           {contracts.length === 0 ? (
-            <div className="glass rounded-xl px-6 py-16 text-center">
+            <div className="surface-panel surface-frame surface-scan rounded-xl px-6 py-16 text-center">
               <p className="text-2xl font-semibold tracking-[-0.02em]">Nenhum contrato</p>
               <p className="mx-auto mt-3 max-w-[46ch] text-sm text-read-soft">Use o cadastro ao lado para associar o primeiro cliente e definir sua recorrência.</p>
             </div>
           ) : (
-            <div className="glass overflow-hidden rounded-xl">
-              <div className="hidden grid-cols-[4rem_minmax(12rem,1fr)_minmax(10rem,.8fr)_8rem_7rem_2rem] gap-4 border-b border-white/12 bg-white/4 px-4 py-3 text-[9px] font-semibold tracking-[0.17em] text-read-faint uppercase md:grid">
+            <div className="surface-panel surface-frame surface-scan overflow-hidden rounded-xl">
+              <div className="hidden grid-cols-[4rem_minmax(12rem,1fr)_minmax(10rem,.8fr)_8rem_7rem_2rem] gap-4 border-b border-white/12 bg-black/30 px-4 py-3 text-[9px] font-semibold tracking-[0.17em] text-read-faint uppercase shadow-[inset_0_1px_0_rgb(255_255_255/6%)] md:grid">
                 <span>Registro</span><span>Contrato / cliente</span><span>Documento</span><span className="text-right">Recorrência</span><span>Status</span><span />
               </div>
               <ul>

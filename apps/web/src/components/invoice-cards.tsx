@@ -12,36 +12,36 @@ import { ChargeState, InvoiceStatus, RailBadge } from "./status-badge";
  */
 export function InvoiceCards({ invoices }: { invoices: BffInvoice[] }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {invoices.map((invoice) => {
         const live = invoice.charge?.status === "PENDING" && invoice.status !== "PAID";
         return (
           <article
             key={invoice.id}
             className={cn(
-              "glass flex flex-col rounded-xl",
-              live && "edge-signal border-signal/25",
+              "card-panel surface-frame surface-scan flex flex-col rounded-xl",
+              live && "card-panel-live",
             )}
           >
-            <div className="flex items-center justify-between gap-3 border-b border-white/8 px-4 py-3">
+            <div className="card-panel-well relative z-1 flex items-center justify-between gap-3 border-b border-white/6 px-4 py-3">
               <span className="readout text-[11px] tracking-[0.16em] text-read-faint uppercase">
                 Fatura {String(invoice.id).padStart(4, "0")}
               </span>
               <InvoiceStatus status={invoice.status} />
             </div>
 
-            <div className="flex flex-1 flex-col px-4 py-4">
+            <div className="relative z-1 flex flex-1 flex-col px-4 py-4">
               <p className="line-clamp-1 text-sm font-medium">{invoice.contract.title}</p>
               <Link
                 href={`/clients/${invoice.client.id}`}
-                className="mt-0.5 line-clamp-1 w-fit text-sm text-read-soft underline decoration-white/20 underline-offset-4 hover:text-signal hover:decoration-signal/50"
+                className="mt-0.5 line-clamp-1 w-fit text-sm text-read-soft underline decoration-white/20 underline-offset-4 hover:text-signal-bright hover:decoration-signal/60"
               >
                 {invoice.client.name}
               </Link>
 
               <Money
                 value={invoice.amount}
-                className="mt-5 text-[2rem] leading-none font-medium"
+                className="mt-5 text-[2rem] leading-none font-medium tracking-[-0.02em]"
               />
 
               <div className="mt-3 flex items-center justify-between gap-3 text-xs text-read-faint">
@@ -53,7 +53,7 @@ export function InvoiceCards({ invoices }: { invoices: BffInvoice[] }) {
               </div>
             </div>
 
-            <div className="flex min-h-[3.25rem] items-center justify-between gap-3 border-t border-white/8 px-4 py-3">
+            <div className="card-panel-well relative z-1 flex min-h-13 items-center justify-between gap-3 border-t border-white/6 px-4 py-3">
               {invoice.charge ? <ChargeState status={invoice.charge.status} /> : <span />}
               <PixChargeButton
                 invoiceId={invoice.id}

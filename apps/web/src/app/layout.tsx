@@ -38,10 +38,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <main className="relative mx-auto w-full max-w-[1440px] flex-1 px-4 py-8 pb-24 sm:px-6 sm:py-10 sm:pb-12 lg:px-8">
           {children}
         </main>
-        <footer className="mt-16 border-t border-white/8">
+        <footer className="surface-chrome surface-frame surface-scan mt-16 border-t">
           <div className="mx-auto flex w-full max-w-[1440px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-6 text-xs text-read-faint sm:px-6 lg:px-8">
             <span>Arinelli Pay — ambiente técnico com dados sintéticos e liquidação real via webhook.</span>
-            <span className="readout tracking-[0.16em] uppercase">Pix · Boleto · Cartão</span>
+            <span className="readout tracking-[0.16em] text-signal/60 uppercase">Pix · Boleto · Cartão</span>
           </div>
         </footer>
       </body>

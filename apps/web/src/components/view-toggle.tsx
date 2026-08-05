@@ -12,7 +12,7 @@ export function ViewToggle({
 }) {
   return (
     <div
-      className="glass inline-flex gap-1 rounded-lg p-1"
+      className="surface-toolbar surface-frame surface-scan inline-flex gap-1 rounded-lg p-1"
       role="group"
       aria-label="Modo de exibição"
     >
@@ -44,7 +44,7 @@ function ToggleLink({
       className={cn(
         "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium tracking-[0.08em] uppercase transition-colors",
         active
-          ? "bg-white/14 text-read shadow-[inset_0_1px_0_0_rgb(255_255_255/16%)]"
+          ? "border border-signal/35 bg-signal/15 text-signal-bright shadow-[inset_0_1px_0_rgb(255_217_102/16%),0_0_20px_-8px_rgb(229_184_46/30%)]"
           : "text-read-faint hover:bg-white/6 hover:text-read-soft",
       )}
     >

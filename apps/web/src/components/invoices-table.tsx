@@ -35,7 +35,7 @@ const columns = [
     cell: (info) => (
       <Link
         href={`/clients/${info.row.original.client.id}`}
-        className="underline decoration-white/20 underline-offset-4 hover:text-signal hover:decoration-signal/50"
+        className="underline decoration-white/20 underline-offset-4 hover:text-signal-bright hover:decoration-signal/60"
       >
         {info.getValue()}
       </Link>
@@ -113,14 +113,14 @@ export function InvoicesTable({ invoices }: { invoices: BffInvoice[] }) {
   });
 
   return (
-    <div className="glass overflow-hidden rounded-xl">
+    <div className="surface-panel surface-frame surface-scan overflow-hidden rounded-xl">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr
                 key={headerGroup.id}
-                className="border-b border-white/12 bg-white/4 text-left"
+                className="border-b border-white/12 bg-black/30 text-left shadow-[inset_0_1px_0_rgb(255_255_255/6%)]"
               >
                 {headerGroup.headers.map((header) => {
                   const sorted = header.column.getIsSorted();

@@ -7,9 +7,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-[#d3b675]",
-        signal: "border-signal/70 bg-signal font-semibold tracking-[0.08em] text-primary-foreground uppercase shadow-[inset_0_1px_0_rgb(255_255_255/32%),0_12px_28px_-18px_rgb(197_164_97/80%)] hover:bg-[#d3b675]",
-        glass: "glass font-medium tracking-[0.08em] text-read uppercase hover:border-signal/35 hover:bg-white/10 hover:text-signal",
+        default: "bg-primary text-primary-foreground shadow-[0_8px_24px_-12px_rgb(229_184_46/55%)] hover:bg-signal-bright hover:text-primary-foreground",
+        signal: "border-signal-bright/50 bg-gradient-to-b from-signal-bright via-signal to-signal-deep font-semibold tracking-[0.08em] text-primary-foreground uppercase shadow-[inset_0_1px_0_rgb(255_255_255/42%),0_14px_32px_-14px_rgb(229_184_46/85%)] hover:from-[#ffe07a] hover:via-signal-bright hover:to-signal hover:shadow-[inset_0_1px_0_rgb(255_255_255/48%),0_18px_40px_-12px_rgb(255_217_102/55%)]",
+        glass: "glass font-medium tracking-[0.08em] text-read uppercase hover:border-signal/45 hover:bg-white/10 hover:text-signal-bright hover:shadow-[0_0_24px_-8px_rgb(229_184_46/25%)]",
         outline: "border-border bg-transparent text-foreground hover:border-signal/30 hover:bg-muted",
         secondary: "bg-secondary text-secondary-foreground hover:bg-white/12",
         ghost: "text-read-soft hover:bg-muted hover:text-foreground",

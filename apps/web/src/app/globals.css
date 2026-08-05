@@ -1,20 +1,21 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* ARINELLI PAY — Registro Executivo.
-   Uma câmara de compensação contemporânea: preto absoluto, grafite, metal
-   dourado funcional e vidro frio. O dourado confirma decisões e liquidação;
-   nunca é ornamento espalhado pela interface. */
+/* ARINELLI PAY — Registro Executivo · 2026.
+   Câmara de compensação contemporânea: preto absoluto, grafite, metal
+   dourado de alta tensão e vidro com reflexo quente. O ouro confirma
+   decisões e liquidação; brilha com intenção, nunca como enfeite solto. */
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-chassis: #080808;
   --color-chassis-lift: #151515;
-  --color-signal: #c5a461;
-  --color-signal-deep: #a88747;
+  --color-signal: #e5b82e;
+  --color-signal-deep: #b8860b;
+  --color-signal-bright: #ffd966;
   --color-alert: #f07867;
-  --color-warn: #d8ad5c;
+  --color-warn: #e8c04a;
   --color-read: #f1f1ee;
   --color-read-soft: #b7b8b4;
   --color-read-faint: #777975;
@@ -27,12 +28,12 @@
   --color-secondary-foreground: var(--color-read);
   --color-muted: rgb(216 217 214 / 6%);
   --color-muted-foreground: var(--color-read-soft);
-  --color-accent: rgb(197 164 97 / 12%);
+  --color-accent: rgb(229 184 46 / 16%);
   --color-accent-foreground: var(--color-read);
   --color-destructive: var(--color-alert);
-  --color-border: rgb(216 217 214 / 12%);
+  --color-border: rgb(229 184 46 / 14%);
   --color-input: rgb(216 217 214 / 15%);
-  --color-ring: var(--color-signal);
+  --color-ring: var(--color-signal-bright);
   --color-popover: rgb(18 18 18 / 94%);
   --color-popover-foreground: var(--color-read);
   --color-card: rgb(216 217 214 / 5%);
@@ -50,8 +51,10 @@
 html {
   min-width: 320px;
   background:
-    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgb(197 164 97 / 5%) calc(100% - 1px)) 0 0 / 25% 100%,
-    radial-gradient(circle at 78% 0%, rgb(197 164 97 / 8%), transparent 34%),
+    linear-gradient(90deg, transparent 0, transparent calc(100% - 1px), rgb(229 184 46 / 9%) calc(100% - 1px)) 0 0 / 25% 100%,
+    radial-gradient(ellipse 90% 55% at 88% -8%, rgb(255 217 102 / 16%), transparent 52%),
+    radial-gradient(ellipse 70% 45% at 4% 102%, rgb(184 134 11 / 12%), transparent 48%),
+    radial-gradient(circle at 50% -12%, rgb(229 184 46 / 8%), transparent 38%),
     var(--color-chassis);
 }
 
@@ -63,29 +66,250 @@ body {
 
 @utility glass {
   background:
-    linear-gradient(145deg, rgb(255 255 255 / 8%), rgb(255 255 255 / 2%) 55%, rgb(197 164 97 / 3%)),
-    rgb(14 14 14 / 76%);
-  backdrop-filter: blur(22px) saturate(1.1);
-  -webkit-backdrop-filter: blur(22px) saturate(1.1);
-  border: 1px solid rgb(216 217 214 / 11%);
+    linear-gradient(180deg, rgb(255 255 255 / 6%) 0%, transparent 20%),
+    linear-gradient(160deg, rgb(255 255 255 / 5%) 0%, transparent 45%, rgb(229 184 46 / 5%) 100%),
+    linear-gradient(180deg, rgb(18 18 20 / 90%) 0%, rgb(8 8 10 / 96%) 100%);
+  backdrop-filter: blur(28px) saturate(1.35);
+  -webkit-backdrop-filter: blur(28px) saturate(1.35);
+  border: 1px solid rgb(229 184 46 / 12%);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 11%),
-    0 24px 60px -40px rgb(0 0 0 / 95%);
+    inset 0 1px 0 rgb(255 255 255 / 12%),
+    inset 0 -16px 32px -16px rgb(0 0 0 / 55%),
+    0 20px 48px -16px rgb(0 0 0 / 82%),
+    0 0 40px -22px rgb(229 184 46 / 12%);
 }
 
 @utility glass-deep {
   background:
-    linear-gradient(155deg, rgb(255 255 255 / 9%), transparent 42%, rgb(197 164 97 / 4%)),
-    rgb(15 15 15 / 91%);
-  backdrop-filter: blur(30px) saturate(1.15);
-  -webkit-backdrop-filter: blur(30px) saturate(1.15);
-  border: 1px solid rgb(216 217 214 / 15%);
+    linear-gradient(180deg, rgb(255 255 255 / 7%) 0%, transparent 18%),
+    linear-gradient(160deg, rgb(255 255 255 / 6%) 0%, transparent 42%, rgb(229 184 46 / 6%) 100%),
+    linear-gradient(180deg, rgb(20 20 22 / 94%) 0%, rgb(6 6 8 / 98%) 100%);
+  backdrop-filter: blur(32px) saturate(1.4);
+  -webkit-backdrop-filter: blur(32px) saturate(1.4);
+  border: 1px solid rgb(229 184 46 / 14%);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 14%),
-    0 40px 100px -44px rgb(0 0 0 / 100%);
+    inset 0 1px 0 rgb(255 255 255 / 16%),
+    inset 0 -28px 56px -28px rgb(0 0 0 / 72%),
+    0 28px 56px -12px rgb(0 0 0 / 88%),
+    0 0 56px -24px rgb(229 184 46 / 14%);
 }
 
-@utility hairline { border-bottom: 1px solid rgb(216 217 214 / 10%); }
+/* ── Sistema de superfícies (chrome · toolbar · panel) ───────────────────── */
+
+.surface-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 20%) 0%,
+    rgb(255 255 255 / 4%) 32%,
+    transparent 55%,
+    rgb(229 184 46 / 24%) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.surface-scan::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -20%, rgb(255 217 102 / 9%), transparent 55%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgb(255 255 255 / 1.2%) 2px,
+      rgb(255 255 255 / 1.2%) 3px
+    );
+  opacity: 0.45;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* Masthead, footer, nav — estrutura full-bleed */
+.surface-chrome {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgb(22 22 24 / 94%) 0%, rgb(8 8 10 / 97%) 100%);
+  backdrop-filter: blur(32px) saturate(1.45);
+  -webkit-backdrop-filter: blur(32px) saturate(1.45);
+  border-color: rgb(229 184 46 / 12%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 11%),
+    inset 0 -20px 40px -20px rgb(0 0 0 / 60%),
+    0 20px 56px -16px rgb(0 0 0 / 88%),
+    0 0 48px -24px rgb(229 184 46 / 10%);
+}
+
+.surface-chrome.surface-frame::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 217 102 / 45%) 50%,
+    transparent 100%
+  );
+  padding: 1px 0 0;
+  -webkit-mask: none;
+  mask: none;
+  height: 1px;
+  inset: 0 0 auto;
+  border-radius: 0;
+}
+
+.surface-chrome.surface-scan::after {
+  opacity: 0.28;
+}
+
+/* Filtros, métricas, toggles — blocos operacionais compactos */
+.surface-toolbar {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 5%) 0%, transparent 22%),
+    linear-gradient(165deg, rgb(255 255 255 / 4%) 0%, transparent 50%, rgb(229 184 46 / 5%) 100%),
+    linear-gradient(180deg, rgb(16 16 18 / 92%) 0%, rgb(7 7 9 / 97%) 100%);
+  backdrop-filter: blur(28px) saturate(1.38);
+  -webkit-backdrop-filter: blur(28px) saturate(1.38);
+  border: 1px solid rgb(229 184 46 / 11%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 13%),
+    inset 0 -20px 40px -20px rgb(0 0 0 / 58%),
+    0 16px 40px -14px rgb(0 0 0 / 84%),
+    0 0 36px -20px rgb(229 184 46 / 11%);
+}
+
+/* Cards, listas, tabelas — painéis de conteúdo */
+.surface-panel,
+.card-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 7%) 0%, transparent 18%),
+    linear-gradient(160deg, rgb(255 255 255 / 6%) 0%, transparent 42%, rgb(229 184 46 / 6%) 100%),
+    linear-gradient(180deg, rgb(20 20 22 / 94%) 0%, rgb(6 6 8 / 98%) 100%);
+  backdrop-filter: blur(32px) saturate(1.4);
+  -webkit-backdrop-filter: blur(32px) saturate(1.4);
+  border: 1px solid rgb(229 184 46 / 10%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 16%),
+    inset 0 -28px 56px -28px rgb(0 0 0 / 72%),
+    0 4px 0 rgb(255 255 255 / 3%),
+    0 28px 56px -12px rgb(0 0 0 / 88%),
+    0 56px 112px -32px rgb(0 0 0 / 75%),
+    0 0 0 1px rgb(0 0 0 / 55%),
+    0 0 56px -24px rgb(229 184 46 / 14%);
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease;
+}
+
+.surface-panel.surface-frame::before,
+.card-panel.surface-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 22%) 0%,
+    rgb(255 255 255 / 4%) 32%,
+    transparent 55%,
+    rgb(229 184 46 / 28%) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.surface-panel.surface-scan::after,
+.card-panel.surface-scan::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -20%, rgb(255 217 102 / 10%), transparent 55%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgb(255 255 255 / 1.5%) 2px,
+      rgb(255 255 255 / 1.5%) 3px
+    );
+  opacity: 0.55;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.surface-panel-live,
+.card-panel-live {
+  border-color: rgb(229 184 46 / 28%);
+  box-shadow:
+    inset 2px 0 0 rgb(229 184 46 / 92%),
+    inset 0 1px 0 rgb(255 217 102 / 20%),
+    inset 0 -28px 56px -28px rgb(0 0 0 / 72%),
+    0 28px 56px -12px rgb(0 0 0 / 88%),
+    0 0 48px -12px rgb(229 184 46 / 32%),
+    0 0 0 1px rgb(0 0 0 / 55%);
+}
+
+.surface-well,
+.card-panel-well {
+  background: rgb(0 0 0 / 28%);
+  box-shadow:
+    inset 0 2px 8px rgb(0 0 0 / 45%),
+    inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+/* Dialogs: não herdar overflow:hidden do painel — scroll interno. */
+.surface-dialog {
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: min(92dvh, calc(100dvh - 2rem));
+}
+
+@media (hover: hover) {
+  .surface-panel:hover,
+  .card-panel:hover {
+    transform: translateY(-3px);
+    border-color: rgb(229 184 46 / 18%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 20%),
+      inset 0 -28px 56px -28px rgb(0 0 0 / 72%),
+      0 8px 0 rgb(255 255 255 / 4%),
+      0 36px 72px -12px rgb(0 0 0 / 90%),
+      0 64px 128px -28px rgb(0 0 0 / 78%),
+      0 0 72px -20px rgb(229 184 46 / 22%),
+      0 0 0 1px rgb(0 0 0 / 55%);
+  }
+}
+
+@utility hairline { border-bottom: 1px solid rgb(229 184 46 / 10%); box-shadow: 0 1px 0 rgb(255 255 255 / 4%); }
 
 @utility readout {
   font-family: var(--font-mono), ui-monospace, monospace;
@@ -95,14 +319,38 @@ body {
 
 @utility edge-signal {
   box-shadow:
-    inset 1px 0 0 rgb(197 164 97 / 85%),
-    inset 0 1px 0 rgb(255 255 255 / 12%),
+    inset 2px 0 0 rgb(229 184 46 / 95%),
+    inset 0 1px 0 rgb(255 217 102 / 18%),
+    0 0 32px -8px rgb(229 184 46 / 35%),
     0 24px 60px -40px rgb(0 0 0 / 95%);
 }
 
+@utility gold-glow {
+  box-shadow:
+    0 0 20px rgb(229 184 46 / 45%),
+    0 0 48px -8px rgb(255 217 102 / 30%);
+}
+
+@utility title-shine {
+  text-shadow: 0 0 48px rgb(229 184 46 / 22%);
+}
+
 @keyframes lamp {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgb(197 164 97 / 70%); }
-  50% { opacity: .38; box-shadow: 0 0 0 transparent; }
+  0%, 100% {
+    opacity: 1;
+    box-shadow:
+      0 0 10px rgb(229 184 46 / 90%),
+      0 0 22px rgb(255 217 102 / 45%);
+  }
+  50% {
+    opacity: .42;
+    box-shadow: 0 0 0 transparent;
+  }
+}
+
+@keyframes gold-pulse {
+  0%, 100% { opacity: .55; }
+  50% { opacity: 1; }
 }
 
 .lamp { animation: lamp 1.8s ease-in-out infinite; }
@@ -110,14 +358,24 @@ body {
 ::selection { background: var(--color-signal); color: var(--color-primary-foreground); }
 
 :focus-visible {
-  outline: 2px solid var(--color-signal);
+  outline: 2px solid var(--color-signal-bright);
   outline-offset: 3px;
   border-radius: 2px;
 }
 
-* { scrollbar-color: rgb(216 217 214 / 18%) transparent; scrollbar-width: thin; }
+* { scrollbar-color: rgb(229 184 46 / 22%) transparent; scrollbar-width: thin; }
 
 @media (prefers-reduced-motion: reduce) {
+  .surface-panel,
+  .card-panel {
+    transition: none;
+  }
+
+  .surface-panel:hover,
+  .card-panel:hover {
+    transform: none;
+  }
+
   *, *::before, *::after {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;

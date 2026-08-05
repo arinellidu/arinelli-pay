@@ -30,10 +30,10 @@ export default async function ClientsPage() {
       </div>
 
       {clients.length === 0 ? (
-        <div className="glass rounded-xl px-6 py-16 text-center"><p className="text-2xl font-semibold tracking-[-0.02em]">Carteira vazia</p><p className="mx-auto mt-3 max-w-[46ch] text-sm text-read-soft">Cadastre uma pessoa física ou jurídica e promova o documento a cliente.</p></div>
+        <div className="surface-panel surface-frame surface-scan rounded-xl px-6 py-16 text-center"><p className="text-2xl font-semibold tracking-[-0.02em]">Carteira vazia</p><p className="mx-auto mt-3 max-w-[46ch] text-sm text-read-soft">Cadastre uma pessoa física ou jurídica e promova o documento a cliente.</p></div>
       ) : (
-        <div className="glass overflow-hidden rounded-xl">
-          <div className="hidden grid-cols-[5rem_minmax(13rem,1fr)_minmax(11rem,.7fr)_minmax(12rem,.9fr)_2rem] gap-4 border-b border-white/12 bg-white/4 px-4 py-3 text-[9px] font-semibold tracking-[0.17em] text-read-faint uppercase md:grid">
+        <div className="surface-panel surface-frame surface-scan overflow-hidden rounded-xl">
+          <div className="surface-well hidden grid-cols-[5rem_minmax(13rem,1fr)_minmax(11rem,.7fr)_minmax(12rem,.9fr)_2rem] gap-4 border-b border-white/12 px-4 py-3 text-[9px] font-semibold tracking-[0.17em] text-read-faint uppercase md:grid">
             <span>Natureza</span><span>Cliente</span><span>Documento</span><span>Contato</span><span />
           </div>
           <ul>

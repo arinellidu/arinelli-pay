@@ -44,18 +44,18 @@ export default async function ClientPage({
 
   return (
     <div>
-      <header className="mb-10">
+      <header className="surface-toolbar surface-frame surface-scan mb-10 rounded-xl px-5 py-6">
         <Link
           href="/clients"
-          className="inline-flex items-center gap-1.5 text-xs text-read-faint hover:text-read"
+          className="relative z-1 inline-flex items-center gap-1.5 text-xs text-read-faint hover:text-signal-bright"
         >
           <ArrowLeft className="size-3.5" aria-hidden />
           Clientes
         </Link>
-        <h1 className="mt-3 text-[clamp(2rem,5.5vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.025em]">
+        <h1 className="title-shine relative z-1 mt-3 text-[clamp(2rem,5.5vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.025em]">
           {client.name}
         </h1>
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-read-soft">
+        <div className="relative z-1 mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-read-soft">
           <Badge variant="outline" className="border-white/12 text-read-soft">
             {client.documentType}
           </Badge>
@@ -65,7 +65,6 @@ export default async function ClientPage({
             Na carteira desde {dateShort(client.createdAt)}
           </span>
         </div>
-        <div className="hairline mt-6" />
       </header>
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
@@ -84,7 +83,7 @@ export default async function ClientPage({
       </div>
 
       {contracts.length === 0 ? (
-        <div className="glass rounded-xl px-6 py-14 text-center">
+        <div className="surface-panel surface-frame surface-scan rounded-xl px-6 py-14 text-center">
           <p className="text-xl font-semibold tracking-[-0.01em]">Sem contratos</p>
           <p className="mx-auto mt-2 max-w-[46ch] text-sm text-read-soft">
             Use “Novo contrato” para definir a primeira cobrança recorrente deste cliente.
@@ -123,22 +122,22 @@ function ContractsCards({
   generate: (formData: FormData) => Promise<void>;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
       {contracts.map((contract) => (
-        <article key={contract.id} className="glass flex flex-col rounded-xl">
-          <div className="flex items-center justify-between gap-3 border-b border-white/8 px-4 py-3">
+        <article key={contract.id} className="surface-panel surface-frame surface-scan card-panel flex flex-col rounded-xl">
+          <div className="card-panel-well relative z-1 flex items-center justify-between gap-3 border-b border-white/6 px-4 py-3">
             <Link
               href={`/contracts/${contract.id}`}
-              className="line-clamp-1 text-sm font-medium hover:text-signal"
+              className="line-clamp-1 text-sm font-medium hover:text-signal-bright"
             >
               {contract.title}
             </Link>
             <ContractStatus status={contract.status} />
           </div>
-          <div className="flex-1 px-4 py-4">
+          <div className="relative z-1 flex-1 px-4 py-4">
             <Money
               value={contract.amount}
-              className="text-[2rem] leading-none font-medium"
+              className="text-[2rem] leading-none font-medium tracking-[-0.02em]"
             />
             <p className="readout mt-3 text-xs text-read-faint">
               Todo dia {contract.billingDay}
@@ -147,7 +146,7 @@ function ContractsCards({
                 : ""}
             </p>
           </div>
-          <div className="flex min-h-[3.25rem] items-center justify-end border-t border-white/8 px-4 py-3">
+          <div className="card-panel-well relative z-1 flex min-h-13 items-center justify-end border-t border-white/6 px-4 py-3">
             <GenerateButton contract={contract} generate={generate} />
           </div>
         </article>
@@ -166,11 +165,11 @@ function ContractsTable({
   const head =
     "readout px-3 py-2.5 text-[10px] tracking-[0.18em] text-read-faint uppercase";
   return (
-    <div className="glass overflow-hidden rounded-xl">
+    <div className="surface-panel surface-frame surface-scan overflow-hidden rounded-xl">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-white/12 bg-white/4 text-left">
+            <tr className="surface-well border-b border-white/12 text-left">
               <th scope="col" className={head}>
                 Nº
               </th>

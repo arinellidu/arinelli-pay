@@ -159,7 +159,7 @@ function Pagination({
   }
 
   const step =
-    "glass inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium tracking-[0.08em] uppercase hover:bg-white/12";
+    "surface-toolbar surface-frame surface-scan inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium tracking-[0.08em] uppercase transition-colors hover:border-signal/25";
 
   return (
     <nav className="mt-8 flex flex-wrap items-center gap-4" aria-label="Paginação">
@@ -186,7 +186,7 @@ function Pagination({
 function EmptyState({ hasFilters, rail }: { hasFilters: boolean; rail?: string }) {
   const futureRail = rail === "BOLETO" || rail === "CARD";
   return (
-    <div className="glass rounded-xl px-6 py-16 text-center">
+    <div className="surface-panel surface-frame surface-scan rounded-xl px-6 py-16 text-center">
       <p className="text-2xl font-semibold tracking-[-0.01em]">
         {futureRail ? "Trilho em preparo" : "Nada nesta leitura"}
       </p>

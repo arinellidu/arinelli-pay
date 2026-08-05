@@ -54,8 +54,8 @@ export function Lamp({ state }: { state: "live" | "on" | "off" }) {
       aria-hidden
       className={cn(
         "inline-block size-[7px] shrink-0 rounded-full",
-        state === "live" && "lamp bg-signal",
-        state === "on" && "bg-signal shadow-[0_0_6px_0_var(--color-signal)]",
+        state === "live" && "lamp bg-signal-bright",
+        state === "on" && "bg-signal-bright shadow-[0_0_8px_0_var(--color-signal-bright),0_0_16px_0_rgb(229_184_46/50%)]",
         state === "off" && "bg-white/25",
       )}
     />
@@ -68,7 +68,7 @@ export function ChargeState({ status }: { status: string }) {
     <span
       className={cn(
         "readout inline-flex items-center gap-2 text-[11px] tracking-[0.12em] uppercase",
-        settled ? "text-signal" : "text-read-faint",
+        settled ? "text-signal-bright" : "text-read-faint",
       )}
     >
       <Lamp state={status === "PENDING" ? "live" : settled ? "on" : "off"} />

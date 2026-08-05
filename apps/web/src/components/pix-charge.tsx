@@ -207,9 +207,12 @@ function PixDialog({
       void QRCode.toCanvas(canvas, emv, {
         errorCorrectionLevel: "M",
         margin: 1,
-        scale: 6,
+        scale: 5,
+        width: 220,
         color: { dark: "#080808", light: "#f1f1ee" },
       });
+      canvas.style.maxWidth = "100%";
+      canvas.style.height = "auto";
     },
     [emv],
   );
@@ -222,8 +225,8 @@ function PixDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-deep max-h-[92dvh] overflow-x-hidden overflow-y-auto rounded-xl p-0 sm:max-w-md">
-        <div className="flex flex-col gap-1.5 border-b border-white/10 px-5 py-3.5 pr-12 sm:flex-row sm:items-center sm:gap-3">
+      <DialogContent className="surface-panel surface-frame surface-scan surface-dialog glass-deep rounded-xl p-0 sm:max-w-md">
+        <div className="surface-well relative flex flex-col gap-1.5 border-b border-white/8 px-5 py-3.5 pr-12 sm:flex-row sm:items-center sm:gap-3">
           <DialogTitle className="readout text-[13px] font-medium tracking-[0.18em] whitespace-nowrap uppercase">
             Cobrança Pix
           </DialogTitle>
@@ -232,7 +235,7 @@ function PixDialog({
             className="readout inline-flex items-center gap-2 text-[11px] tracking-[0.14em] whitespace-nowrap uppercase sm:ml-auto"
           >
             <Lamp state={settled ? "on" : "live"} />
-            <span className={settled ? "text-signal" : "text-read-soft"}>
+            <span className={settled ? "text-signal-bright" : "text-read-soft"}>
               {settled ? "Liquidada" : "Aguardando pagamento"}
             </span>
           </span>
@@ -245,7 +248,7 @@ function PixDialog({
             </p>
             <div className="relative mt-2 flex items-end justify-between gap-4">
               <motion.span
-                animate={{ color: settled ? "#c5a461" : "#f1f1ee" }}
+                animate={{ color: settled ? "#ffd966" : "#f1f1ee" }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               >
                 <Money value={amount} className="text-[2.5rem] leading-none font-medium" />
@@ -257,12 +260,12 @@ function PixDialog({
           </div>
 
           <div className="flex flex-col items-center gap-3">
-            <div className="rounded-lg bg-read p-2.5 shadow-[0_18px_40px_-24px_rgb(0_0_0/90%)]">
+            <div className="w-full max-w-60 rounded-lg bg-read p-2.5 shadow-[0_18px_40px_-24px_rgb(0_0_0/90%)]">
               <canvas
                 ref={paintQr}
                 role="img"
                 aria-label={`QR Pix da fatura ${invoiceNumber} — ${money(amount)}`}
-                className="block"
+                className="mx-auto block h-auto w-full max-w-full"
               />
             </div>
             <DialogDescription className="max-w-[42ch] text-center text-xs text-read-soft">
@@ -297,7 +300,7 @@ function PixDialog({
 function SettlementSeal({ amount }: { amount: number }) {
   return (
     <motion.span
-      className="relative inline-flex shrink-0 items-center gap-2 rounded-md border border-signal/40 bg-signal/12 px-2.5 py-1.5"
+      className="relative inline-flex shrink-0 items-center gap-2 rounded-md border border-signal-bright/45 bg-signal/18 px-2.5 py-1.5 shadow-[0_0_24px_-4px_rgb(229_184_46/45%),inset_0_1px_0_rgb(255_217_102/18%)]"
       initial={{ opacity: 0, scale: 0.72, filter: "blur(8px)" }}
       animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
       exit={{ opacity: 0, scale: 0.9 }}
@@ -306,13 +309,13 @@ function SettlementSeal({ amount }: { amount: number }) {
     >
       <motion.span
         aria-hidden
-        className="absolute inset-0 rounded-md border border-signal"
+        className="absolute inset-0 rounded-md border border-signal-bright"
         initial={{ opacity: 0.65, scale: 1 }}
         animate={{ opacity: 0, scale: 1.9 }}
         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
       />
-      <Check className="size-4 text-signal" aria-hidden />
-      <span className="readout text-xs font-medium tracking-[0.18em] text-signal uppercase">
+      <Check className="size-4 text-signal-bright" aria-hidden />
+      <span className="readout text-xs font-medium tracking-[0.18em] text-signal-bright uppercase">
         Paga
       </span>
     </motion.span>

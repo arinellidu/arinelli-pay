@@ -32,8 +32,8 @@ void main() {
   float halo = exp(-pow((axis - front) * 3.4, 2.0));
   float edge = exp(-pow((axis - front) * 26.0, 2.0));
   float decay = 1.0 - smoothstep(0.45, 1.1, u_settle);
-  float alpha = clamp((halo * 0.24 + edge * 0.72) * decay, 0.0, 0.82);
-  vec3 gold = mix(vec3(0.773, 0.643, 0.380), vec3(0.91, 0.79, 0.55), edge);
+  float alpha = clamp((halo * 0.28 + edge * 0.82) * decay, 0.0, 0.92);
+  vec3 gold = mix(vec3(0.898, 0.722, 0.180), vec3(1.0, 0.851, 0.400), edge);
   outColor = vec4(gold * alpha, alpha);
 }`;
 

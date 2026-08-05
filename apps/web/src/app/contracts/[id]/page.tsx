@@ -35,14 +35,14 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
 
   return (
     <div>
-      <header className="mb-8">
-        <Link href="/contracts" className="inline-flex items-center gap-1.5 text-xs text-read-faint hover:text-read">
+      <header className="surface-toolbar surface-frame surface-scan mb-8 rounded-xl px-5 py-6">
+        <Link href="/contracts" className="relative z-1 inline-flex items-center gap-1.5 text-xs text-read-faint hover:text-signal-bright">
           <ArrowLeft className="size-3.5" aria-hidden />
           Contratos
         </Link>
-        <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+        <div className="relative z-1 mt-3 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-[clamp(2rem,5.5vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.025em]">
+            <h1 className="title-shine text-[clamp(2rem,5.5vw,3.25rem)] leading-[1.02] font-semibold tracking-[-0.025em]">
               {contract.title}
             </h1>
             <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-read-soft">
@@ -60,11 +60,10 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
             </form>
           ) : null}
         </div>
-        <div className="hairline mt-6" />
       </header>
 
       <div className="grid gap-4 md:grid-cols-[1.15fr_0.85fr]">
-        <section className="glass rounded-xl px-5 py-5">
+        <section className="surface-panel surface-frame surface-scan rounded-xl px-5 py-5">
           <p className="readout text-[10px] tracking-[0.2em] text-read-faint uppercase">Valor recorrente</p>
           <Money value={contract.amount} className="mt-3 block text-[clamp(2.5rem,7vw,4rem)] leading-none font-medium" />
           <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/8 pt-4">
@@ -81,7 +80,7 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
           </div>
         </section>
 
-        <section className="glass flex flex-col justify-between rounded-xl px-5 py-5">
+        <section className="surface-panel surface-frame surface-scan flex flex-col justify-between rounded-xl px-5 py-5">
           <div>
             <p className="readout text-[10px] tracking-[0.2em] text-read-faint uppercase">Cliente</p>
             <Link href={`/clients/${contract.clientId}`} className="mt-3 block text-xl font-semibold hover:text-signal">

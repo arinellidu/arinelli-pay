@@ -100,7 +100,7 @@ export function ContractForm({
 
   if (presentation === "panel") {
     return (
-      <aside className="glass-deep rounded-xl border-t-signal/45 p-5 lg:sticky lg:top-[92px]" aria-labelledby="contract-panel-title">
+      <aside className="surface-panel surface-frame surface-scan rounded-xl border-t-signal/45 p-5 lg:sticky lg:top-[92px]" aria-labelledby="contract-panel-title">
         <h2 id="contract-panel-title" className="text-xl font-semibold tracking-[-0.025em]">Cadastrar contrato</h2>
         <p className="mt-2 mb-5 text-xs leading-relaxed text-read-soft">Associe um cliente e defina a próxima recorrência.</p>
         {form}
@@ -112,7 +112,7 @@ export function ContractForm({
     <>
       <Button variant="glass" onClick={() => setOpen(true)} disabled={clients.length === 0}><FilePlus2 data-icon="inline-start" /> Novo contrato</Button>
       <Dialog open={open} onOpenChange={close}>
-        <DialogContent className="glass-deep rounded-xl p-0 sm:max-w-lg">
+        <DialogContent className="surface-panel surface-frame surface-scan surface-dialog glass-deep rounded-xl p-0 sm:max-w-lg">
           <div className="border-b border-white/10 px-5 py-4 pr-12">
             <DialogTitle className="text-lg font-semibold tracking-[-0.02em]">Novo contrato</DialogTitle>
             <DialogDescription className="mt-1 text-xs text-read-soft">Defina o cliente, o valor recorrente e o dia de vencimento.</DialogDescription>

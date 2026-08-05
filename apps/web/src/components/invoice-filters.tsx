@@ -31,7 +31,7 @@ const railOptions: Option[] = [
 ];
 
 const control =
-  "h-9 w-full rounded-lg border border-input bg-white/4 px-2.5 text-sm text-read outline-none transition-colors hover:bg-white/8 focus-visible:border-ring";
+  "surface-well h-9 w-full rounded-lg border border-signal/10 px-2.5 text-sm text-read outline-none transition-colors hover:border-signal/20 focus-visible:border-signal-bright/50";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -65,7 +65,7 @@ export function InvoiceFilters({
     <form
       method="get"
       action="/invoices"
-      className="glass grid w-full grid-cols-2 items-end gap-x-3 gap-y-3 rounded-xl p-3 sm:flex sm:flex-nowrap"
+      className="surface-toolbar surface-frame surface-scan grid w-full grid-cols-2 items-end gap-x-3 gap-y-3 rounded-xl p-3 sm:flex sm:flex-nowrap"
     >
       <input type="hidden" name="view" value={params.view ?? "cards"} />
 
@@ -128,7 +128,7 @@ function SelectField({
       <SelectTrigger className="h-9 w-full border-input bg-white/4 text-sm hover:bg-white/8">
         <SelectValue />
       </SelectTrigger>
-      <SelectContent className="glass-deep">
+      <SelectContent className="surface-panel surface-frame surface-scan glass-deep rounded-lg">
         {options.map((option) => (
           <SelectItem key={option.value || "all"} value={option.value}>
             {option.label}

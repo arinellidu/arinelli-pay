@@ -5,15 +5,23 @@ import { useRouter } from "next/navigation";
 import { UserRoundPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FieldLabel, fieldControl } from "@/components/people/form-field";
+import { FieldLabel } from "@/components/people/form-field";
 import { cadastrarCliente } from "@/lib/portfolio-client";
 import { documentMask } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export interface ClientCandidate {
   key: string;
@@ -32,6 +40,16 @@ export function ClientForm({ candidates }: { candidates: ClientCandidate[] }) {
   const candidate = useMemo(
     () => candidates.find((item) => item.key === selected),
     [candidates, selected],
+  );
+  const personOptions = useMemo(
+    () => [
+      { value: "", label: "Selecione por nome ou documento" },
+      ...candidates.map((item) => ({
+        value: item.key,
+        label: `${item.name} · ${item.documentType} ${documentMask(item.document)}`,
+      })),
+    ],
+    [candidates],
   );
 
   const close = (next: boolean) => {
@@ -73,7 +91,7 @@ export function ClientForm({ candidates }: { candidates: ClientCandidate[] }) {
       </Button>
 
       <Dialog open={open} onOpenChange={close}>
-        <DialogContent className="glass-deep rounded-xl p-0 sm:max-w-lg">
+        <DialogContent className="surface-panel surface-frame surface-scan surface-dialog glass-deep rounded-xl p-0 sm:max-w-lg">
           <div className="border-b border-white/10 px-5 py-3.5 pr-12">
             <DialogTitle className="readout text-[13px] font-medium tracking-[0.18em] uppercase">
               Novo cliente
@@ -86,27 +104,36 @@ export function ClientForm({ candidates }: { candidates: ClientCandidate[] }) {
           <form onSubmit={(event) => void submit(event)} className="space-y-4 px-5 py-5">
             <div className="flex flex-col gap-1.5">
               <FieldLabel htmlFor="client-person">Pessoa cadastrada</FieldLabel>
-              <select
-                id="client-person"
-                className={fieldControl(Boolean(error))}
+              <Select
+                items={personOptions}
                 value={selected}
-                onChange={(event) => {
-                  setSelected(event.target.value);
+                onValueChange={(value) => {
+                  setSelected(value ?? "");
                   setError("");
                 }}
-                autoFocus
               >
-                <option value="">Selecione por nome ou documento</option>
-                {candidates.map((item) => (
-                  <option key={item.key} value={item.key}>
-                    {item.name} · {item.documentType} {documentMask(item.document)}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  id="client-person"
+                  aria-invalid={error ? true : undefined}
+                  className={cn(
+                    "h-9 w-full bg-white/4 text-sm text-read hover:bg-white/8",
+                    error ? "border-alert/70" : "border-input",
+                  )}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="surface-panel surface-frame surface-scan glass-deep rounded-lg border-signal/15">
+                  {personOptions.map((option) => (
+                    <SelectItem key={option.value || "empty"} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {candidate ? (
-              <div className="rounded-lg border border-white/8 bg-white/4 px-3 py-3 text-sm">
+              <div className="surface-well rounded-lg border border-signal/10 px-3 py-3 text-sm">
                 <p className="font-medium">{candidate.name}</p>
                 <p className="readout mt-1 text-xs text-read-soft">
                   {candidate.documentType} · {documentMask(candidate.document)}

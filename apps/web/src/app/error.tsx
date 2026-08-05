@@ -12,7 +12,7 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div className="glass rounded-xl px-6 py-16 text-center">
+    <div className="surface-panel surface-frame surface-scan rounded-xl px-6 py-16 text-center">
       <p className="text-2xl font-semibold tracking-[-0.01em] text-alert">
         Falha de comunicação
       </p>
