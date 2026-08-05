@@ -23,3 +23,6 @@ playwright-report/
 
 # artefatos do Playwright MCP (screenshots de inspeção)
 .playwright-mcp/
+
+# logs da stack local (scripts/dev-local.ps1)
+.tmp/
