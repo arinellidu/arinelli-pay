@@ -20,7 +20,7 @@ SaaS de cobrança multi-trilho (Pix · boleto/QR · cartão) com CRM mínimo: CP
 **Por que Go só nos workers:** é onde concorrência e I/O-bound pagam (SKIP LOCKED + goroutines + backoff). Gateway não justifica um runtime extra — Spring Cloud Gateway já está no ecossistema do core.
 
 ## Invariantes (nunca viole)
-- **I1 — Idempotência total.** Mutação de pagamento exige `Idempotency-Key`; replay retorna o resultado original. Unique no banco.
+- **I1 — Idempotência total.** Mutação que cria dinheiro a receber — cobrança e geração de fatura — exige `Idempotency-Key`; replay retorna o resultado original. Unique no banco (ADR-005).
 - **I2 — Outbox.** Efeito externo só via outbox: evento gravado na MESMA transação do estado; entrega é assíncrona (worker Go).
 - **I3 — Dinheiro é `BigDecimal` / `NUMERIC(14,2)`.** Nunca double. Scale 2, RoundingMode explícito.
 - **I4 — Providers atrás de ports.** Nenhum SDK de PSP fora de `adapters/`.

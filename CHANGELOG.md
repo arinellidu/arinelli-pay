@@ -4,6 +4,15 @@ Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 
 ## [Unreleased]
 
+### I1 na geração de fatura (2026-08-05)
+
+- `POST /contracts/{id}/invoices:generate-next` passa a exigir `Idempotency-Key`, como já era em `POST /charges`. Sem header: 400 no gateway (`IdempotencyKeyGlobalFilter` agora guarda também a rota de billing) e 400 de novo no core, para quem chamar direto.
+- **Duas travas no banco, uma por natureza de erro** (migration `0004_invoice_idempotency.sql`): `uq_invoices_idem` faz o replay do MESMO pedido devolver a fatura original com 200; `uq_invoices_contract_due` — unique parcial em `(contract_id, due_date)` ignorando canceladas — impede que dois pedidos concorrentes faturem a mesma competência. Sem elas, clique duplo gerava a competência *seguinte* (a regra de vencimento se ancora na última fatura) e duas abas geravam duas faturas do mesmo mês.
+- A chave nasce no **render** do formulário (campo oculto com `randomUUID()`, nas telas de contrato e de cliente): reenviar aquele formulário repete a chave; só um render novo, depois do `revalidatePath`, pede a competência seguinte. Mesmo princípio do `PixChargeButton`.
+- `InvoiceService.generateNext` deixa de ser `@Transactional` no método e usa `TransactionTemplate`: o conflito precisa ser lido depois do rollback, não dentro dele — mesmo desenho de `ChargeService`. O BFF passa a repassar o status do core (201 gerou · 200 replay) em vez de fixar 201 do Nest.
+- Racional, alternativas descartadas e o que isso exige de quem for implementar cancelamento de fatura: **ADR-005**. `CLAUDE.md` e `AGENTS.md` atualizados — I1 agora fala em "mutação que cria dinheiro a receber", não só pagamento.
+- Testes: 76 no billing-core (3 novos: sem header 400, replay 200 com a mesma fatura, duas intenções concorrentes sem duplicar competência), 7 no gateway (2 novos: borda da geração e cadastro seguindo livre), 41 no BFF. Verificado ao vivo na stack local, com a migration aplicada sobre base já populada.
+
 ### Registro executivo — edição na própria linha e demo regravada (2026-08-04)
 
 - **O cadastro se corrige onde é lido:** cada célula das listas PF/PJ ganha um lápis (`EditableCell`) que abre o formulário da linha já preenchido. `PUT /people/pf|pj/{id}` no billing-core — renormaliza o documento, o unique do banco continua decidindo duplicado e id inexistente vira 404 (`PersonNotFoundException`) — e `PUT /bff/people/pf|pj/{id}` no BFF, com o MESMO schema zod espelhado do cadastro e o mesmo `{ fieldErrors }` caindo no campo de origem.

@@ -75,10 +75,13 @@ decisão financeira.
 
 ### I1 — Idempotência total
 
-- Toda mutação de pagamento exige `Idempotency-Key`.
+- Toda mutação que cria dinheiro a receber exige `Idempotency-Key`: hoje
+  `POST /charges` e `POST /contracts/{id}/invoices:generate-next`.
 - A chave nasce no cliente chamador e atravessa gateway e BFF sem ser trocada.
-- Replay retorna o resultado original.
+- Replay retorna o resultado original — 200, nunca um segundo 201.
 - Corridas são resolvidas por constraint unique no banco, não por memória local.
+- Onde existe identificador natural do lado de fora (documento do cadastro), o
+  unique dele já resolve e a chave não é exigida — ver ADR-005.
 
 ### I2 — Outbox
 
