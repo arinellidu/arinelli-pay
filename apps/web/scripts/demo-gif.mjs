@@ -1,8 +1,10 @@
 // Grava o fluxo de portfólio completo pela interface:
-// pessoa cadastrada → cliente → contrato → fatura → Pix → webhook → PAGA.
+// pessoa cadastrada → correção na própria linha → cliente → contrato → fatura →
+// Pix → webhook → PAGA.
 //
-// A pessoa sintética é provisionada pela API porque o foco do filme é o CRM
-// de cobrança. Cliente, contrato, fatura e cobrança nascem pela própria UI.
+// A pessoa sintética nasce pela API porque o foco do filme é o que vem depois:
+// a edição in-place do cadastro e o ciclo de cobrança. Cliente, contrato, fatura
+// e cobrança nascem pela própria UI.
 // Uso: `node scripts/demo-gif.mjs <dir-de-saida>` com a stack local completa.
 import { chromium } from "playwright";
 import { createHmac } from "node:crypto";
@@ -26,6 +28,11 @@ function generateValidCpf() {
   return digits.join("");
 }
 
+/** Mesma máscara da tela: o filme procura a linha pelo documento formatado. */
+function cpfMask(cpf) {
+  return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+}
+
 async function post(url, data) {
   const response = await fetch(url, {
     method: "POST",
@@ -40,18 +47,29 @@ async function post(url, data) {
 
 const stamp = Date.now().toString().slice(-6);
 const cpf = generateValidCpf();
-const personName = `Marina Costa ${stamp}`;
+const personName = "Marina Costa Ferreira";
 const contractTitle = "Direção criativa mensal";
+const novoTelefone = "11944223310";
 
-await post(`${BFF}/bff/people/pf`, {
+const person = await post(`${BFF}/bff/people/pf`, {
   nome: personName,
   cpf,
-  email: `marina${stamp}@costastudio.com.br`,
-  telefone: "11987654321",
+  email: `marina.ferreira${stamp}@costastudio.com.br`,
+  // o telefone entra errado de propósito: a correção acontece no filme, na
+  // própria linha da lista, e volta persistida do billing-core
+  telefone: "1133224400",
   cidade: "São Paulo",
   uf: "SP",
 });
-console.log(`pessoa ${personName} provisionada`);
+console.log(`pessoa ${personName} (#${person.id}) provisionada`);
+
+// Next em dev compila a rota no primeiro acesso; pré-aquecer evita que o filme
+// registre o compile em vez do produto.
+await Promise.all(
+  ["/pessoas/fisicas", "/clients", "/contracts", "/invoices?view=table"].map((route) =>
+    fetch(`${WEB}${route}`).catch(() => {}),
+  ),
+);
 
 const browser = await chromium.launch({
   args: ["--enable-unsafe-swiftshader", "--force-device-scale-factor=1"],
@@ -61,49 +79,75 @@ const context = await browser.newContext({
   locale: "pt-BR",
   recordVideo: { dir: outDir, size: { width: 1280, height: 800 } },
 });
+// O indicador de dev do Next não é produto e não entra no filme. Ele monta num
+// custom element de shadow DOM (`:host { all: initial }`) e a hidratação varre
+// <style> injetado, então a única remoção estável é tirar o elemento do DOM —
+// em init script, para valer em toda navegação, inclusive no reload final.
+await context.addInitScript(() => {
+  const kill = () =>
+    document.querySelectorAll("nextjs-portal").forEach((element) => element.remove());
+  setInterval(kill, 120);
+  document.addEventListener("DOMContentLoaded", kill);
+});
 const page = await context.newPage();
-const hideDevtools = async () => {
-  await page
-    .addStyleTag({ content: "nextjs-portal, [data-nextjs-toast] { display: none !important; }" })
-    .catch(() => {});
-};
 
-// 1. O CPF já cadastrado vira cliente pela interface.
-await page.goto(`${WEB}/clients`, { waitUntil: "networkidle" });
-await hideDevtools();
+// 1. O cadastro se corrige onde é lido: lápis na célula, formulário da linha.
+await page.goto(`${WEB}/pessoas/fisicas`, { waitUntil: "networkidle" });
+const personRow = page.getByRole("listitem").filter({ hasText: cpfMask(cpf) });
+await personRow.waitFor();
+await page.waitForTimeout(1100);
+
+await personRow.getByRole("button", { name: "Editar telefone" }).click();
+const personDialog = page.getByRole("dialog");
+await personDialog.getByText("Editar pessoa física").waitFor();
+await page.waitForTimeout(500);
+const phoneField = personDialog.getByLabel("Telefone");
+await phoneField.click();
+await phoneField.press("ControlOrMeta+a");
+// digitado, não colado: a máscara se forma na frente de quem assiste
+await phoneField.pressSequentially(novoTelefone, { delay: 55 });
+await page.waitForTimeout(400);
+await personDialog.getByRole("button", { name: "Salvar" }).click();
+await personRow.getByText("(11) 94422-3310").waitFor();
 await page.waitForTimeout(1200);
+
+// 2. O CPF já cadastrado vira cliente pela interface.
+await page.goto(`${WEB}/clients`, { waitUntil: "networkidle" });
+await page.waitForTimeout(700);
 await page.getByRole("button", { name: "Novo cliente" }).click();
 const clientDialog = page.getByRole("dialog");
-const candidateValue = await clientDialog
-  .locator("option")
-  .filter({ hasText: personName })
-  .getAttribute("value");
-if (!candidateValue) throw new Error("pessoa provisionada não apareceu no cadastro de cliente");
-await clientDialog.getByLabel("Pessoa cadastrada").selectOption(candidateValue);
-await page.waitForTimeout(900);
+await clientDialog.locator("#client-person").click();
+const candidate = page
+  .locator('[data-slot="select-item"]')
+  .filter({ hasText: cpfMask(cpf) })
+  .first();
+await candidate.waitFor();
+await page.waitForTimeout(400);
+await candidate.click();
+await page.waitForTimeout(600);
 await clientDialog.getByRole("button", { name: "Cadastrar cliente" }).click();
 await page.waitForURL(/\/clients\/\d+$/);
 await page.getByRole("heading", { name: personName }).waitFor();
 const clientId = Number(new URL(page.url()).pathname.split("/").pop());
-await page.waitForTimeout(1200);
+await page.waitForTimeout(900);
 
-// 2. O contrato nasce vinculado ao cliente e abre sua página própria.
+// 3. O contrato nasce vinculado ao cliente e abre sua página própria.
 await page.getByRole("button", { name: "Novo contrato" }).click();
 const contractDialog = page.getByRole("dialog");
 await contractDialog.getByLabel("Título").fill(contractTitle);
 await contractDialog.getByLabel("Valor mensal").fill("2400,00");
 await contractDialog.getByLabel("Dia").fill("20");
-await page.waitForTimeout(700);
+await page.waitForTimeout(500);
 await contractDialog.getByRole("button", { name: "Criar contrato" }).click();
 await page.waitForURL(/\/contracts\/\d+$/);
 await page.getByRole("heading", { name: contractTitle }).waitFor();
 const contractId = Number(new URL(page.url()).pathname.split("/").pop());
-await page.waitForTimeout(1400);
+await page.waitForTimeout(1000);
 
-// 3. A primeira fatura é gerada pela ação do contrato.
+// 4. A primeira fatura é gerada pela ação do contrato.
 await page.getByRole("button", { name: "Gerar próxima fatura" }).click();
 await page.getByText(/Próximo vencimento/).waitFor();
-await page.waitForTimeout(900);
+await page.waitForTimeout(700);
 
 const invoicePage = await (
   await fetch(`${BFF}/bff/invoices?clientId=${clientId}&size=20`)
@@ -117,15 +161,15 @@ await page.waitForURL(/\/invoices/);
 await page.goto(`${WEB}/invoices?clientId=${clientId}&view=table`, { waitUntil: "networkidle" });
 const record = page.locator("tbody tr", { hasText: invoiceNumber });
 await record.waitFor();
-await page.waitForTimeout(1400);
+await page.waitForTimeout(1000);
 
-// 4. Cobrança Pix e QR com EMV real.
+// 5. Cobrança Pix e QR com EMV real.
 await record.getByRole("button", { name: "Cobrar via Pix" }).click();
 const pixDialog = page.getByRole("dialog");
 await pixDialog.locator("canvas").waitFor();
-await page.waitForTimeout(2200);
+await page.waitForTimeout(1800);
 
-// 5. O webhook HMAC e o worker liquidam; a UI descobre pelo polling.
+// 6. O webhook HMAC e o worker liquidam; a UI descobre pelo polling.
 const charges = await (await fetch(`${PAYMENTS}/invoices/${invoice.id}/charges`)).json();
 const txid = charges[charges.length - 1].providerRef;
 const body = JSON.stringify({ e2eId: `GIF-${invoice.id}-${stamp}`, txid, status: "CONCLUIDA" });
@@ -139,14 +183,14 @@ if (!webhook.ok) throw new Error(`webhook respondeu ${webhook.status}`);
 console.log("webhook:", (await webhook.json()).result);
 
 await pixDialog.getByLabel(/^Paga —/).waitFor({ timeout: 30_000 });
-await page.waitForTimeout(2000);
+await page.waitForTimeout(1500);
 // A listagem do BFF tem uma janela curta de cache. Deixamos o selo em cena
 // enquanto ela expira e então relemos a página para encerrar no estado PAGA.
-await page.waitForTimeout(3500);
+await page.waitForTimeout(3000);
 await page.keyboard.press("Escape");
 await page.reload({ waitUntil: "networkidle" });
 await record.getByText("PAGA", { exact: true }).waitFor({ timeout: 30_000 });
-await page.waitForTimeout(2200);
+await page.waitForTimeout(1500);
 
 await context.close();
 await browser.close();

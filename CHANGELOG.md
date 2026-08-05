@@ -4,6 +4,15 @@ Formato inspirado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/)
 
 ## [Unreleased]
 
+### Registro executivo — edição na própria linha e demo regravada (2026-08-04)
+
+- **O cadastro se corrige onde é lido:** cada célula das listas PF/PJ ganha um lápis (`EditableCell`) que abre o formulário da linha já preenchido. `PUT /people/pf|pj/{id}` no billing-core — renormaliza o documento, o unique do banco continua decidindo duplicado e id inexistente vira 404 (`PersonNotFoundException`) — e `PUT /bff/people/pf|pj/{id}` no BFF, com o MESMO schema zod espelhado do cadastro e o mesmo `{ fieldErrors }` caindo no campo de origem.
+- PF passa a exigir e-mail e telefone (antes opcionais): schema espelhado, formulário e core alinhados no mesmo commit.
+- **A saída do diálogo não pisca mais:** o Base UI desmonta o popup ~250ms depois do fim da animação e, sem `animation-fill-mode`, o painel reacendia em opacidade cheia nesse intervalo. `data-closed:fill-mode-forwards` no popup, no véu e no select. Junto: a pessoa em edição sobrevive ao fechamento (senão o diálogo trocava para "nova pessoa" no meio da animação) e a lista só repinta quando a saída termina.
+- Chassi do registro executivo refinado: superfícies `surface-chrome/toolbar/dialog`, cartões `card-panel*`, utilitários `hairline`, `gold-glow` e `title-shine`, e o select do cadastro de cliente passa a ser o componente Base UI (não mais `<select>` nativo).
+- **Demo regravada** (`docs/demo.gif` — 900px, 10fps, ~25s): abre corrigindo o telefone na linha da pessoa e segue o ciclo real (cliente → contrato → fatura → QR Pix com EMV válido → webhook HMAC → outbox → worker Go → PAGA). O roteiro `apps/web/scripts/demo-gif.mjs` acompanha a UI nova e passa a remover o indicador de dev do Next por init script — o seletor antigo não pegava mais o custom element de shadow DOM.
+- Verificações: web lint + build, 41 testes no BFF, suíte do billing-core (Testcontainers + Flyway) verde.
+
 ### Pessoas PF/PJ — persistência no billing-core (2026-08-03)
 
 - Cadastro de pessoas sai do mock em memória e vira domínio do core (I6, SQL-first): migrations `0002_people.sql` (tabelas `natural_persons`/`legal_persons`, unique de documento, FK `responsible_id` NOT NULL) e `0003_seed_demo_people.sql` (seed de demonstração idempotente — `ON CONFLICT DO NOTHING` + `setval`; o seed que era código no BFF virou SQL versionado).
