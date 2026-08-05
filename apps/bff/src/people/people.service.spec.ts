@@ -17,7 +17,12 @@ const upstreamError = (status: number, detail: string) =>
     data: { title: 'x', detail, status },
   } as AxiosResponse);
 
-const pfPayload = pessoaFisicaSchema.parse({ nome: 'Ana Souza', cpf: '287.244.093-32' });
+const pfPayload = pessoaFisicaSchema.parse({
+  nome: 'Ana Souza',
+  cpf: '287.244.093-32',
+  email: 'ana.souza@exemplo.com.br',
+  telefone: '31984120000',
+});
 const pjPayload = pessoaJuridicaSchema.parse({
   razaoSocial: 'Aurora Design LTDA',
   cnpj: '11.222.333/0001-81',
@@ -110,7 +115,13 @@ describe('ZodBody (o 400 que o formulário consome)', () => {
 
   it('deixa passar payload válido já transformado', () => {
     const pipe = new ZodBody(pessoaFisicaSchema);
-    const parsed = pipe.transform({ nome: 'Ana Souza', cpf: '529.982.247-25' });
+    const parsed = pipe.transform({
+      nome: 'Ana Souza',
+      cpf: '529.982.247-25',
+      email: 'ana@exemplo.com.br',
+      telefone: '(11) 98765-4321',
+    });
     expect(parsed.cpf).toBe('52998224725');
+    expect(parsed.telefone).toBe('11987654321');
   });
 });

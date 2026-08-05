@@ -59,6 +59,31 @@ public class PeopleService {
         }
     }
 
+    @Transactional
+    public NaturalPerson updateNatural(Long id, NaturalPersonRequest request) {
+        NaturalPerson person = naturalRepository.findById(id)
+                .orElseThrow(() -> new PersonNotFoundException("Pessoa física", id));
+        String cpf = DocumentValidator.normalize(request.cpf());
+        if (!DocumentValidator.isValidCpf(cpf)) {
+            throw new InvalidDocumentException(request.cpf());
+        }
+        if (!cpf.equals(person.getCpf()) && naturalRepository.existsByCpf(cpf)) {
+            throw new DuplicateDocumentException(cpf);
+        }
+        person.update(
+                request.nome().trim(),
+                cpf,
+                blankToNull(request.email()),
+                digitsOrNull(request.telefone()),
+                addressOf(request.cep(), request.logradouro(), request.numero(),
+                        request.complemento(), request.bairro(), request.cidade(), request.uf()));
+        try {
+            return naturalRepository.saveAndFlush(person);
+        } catch (DataIntegrityViolationException e) {
+            throw new DuplicateDocumentException(cpf);
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<LegalPerson> listLegal() {
         return legalRepository.findAll(NEWEST_FIRST);
@@ -77,6 +102,35 @@ public class PeopleService {
                 .orElseThrow(() -> new ResponsibleNotFoundException(request.responsavelId()));
 
         LegalPerson company = new LegalPerson(
+                request.razaoSocial().trim(),
+                blankToNull(request.nomeFantasia()),
+                cnpj,
+                request.emailContato().trim(),
+                digitsOrNull(request.telefoneContato()),
+                responsible,
+                addressOf(request.cep(), request.logradouro(), request.numero(),
+                        request.complemento(), request.bairro(), request.cidade(), request.uf()));
+        try {
+            return legalRepository.saveAndFlush(company);
+        } catch (DataIntegrityViolationException e) {
+            throw new DuplicateDocumentException(cnpj);
+        }
+    }
+
+    @Transactional
+    public LegalPerson updateLegal(Long id, LegalPersonRequest request) {
+        LegalPerson company = legalRepository.findWithResponsibleById(id)
+                .orElseThrow(() -> new PersonNotFoundException("Pessoa jurídica", id));
+        String cnpj = DocumentValidator.normalize(request.cnpj());
+        if (!DocumentValidator.isValidCnpj(cnpj)) {
+            throw new InvalidDocumentException(request.cnpj());
+        }
+        if (!cnpj.equals(company.getCnpj()) && legalRepository.existsByCnpj(cnpj)) {
+            throw new DuplicateDocumentException(cnpj);
+        }
+        NaturalPerson responsible = naturalRepository.findById(request.responsavelId())
+                .orElseThrow(() -> new ResponsibleNotFoundException(request.responsavelId()));
+        company.update(
                 request.razaoSocial().trim(),
                 blankToNull(request.nomeFantasia()),
                 cnpj,

@@ -83,4 +83,12 @@ public class NaturalPerson {
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
+
+    public void update(String fullName, String cpf, String email, String phone, Address address) {
+        this.fullName = fullName;
+        this.cpf = cpf;
+        this.email = email;
+        this.phone = phone;
+        this.address = address;
+    }
 }

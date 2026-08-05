@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import type { PessoaFisicaPayload, PessoaJuridicaPayload } from './people-schema';
 import { pessoaFisicaSchema, pessoaJuridicaSchema } from './people-schema';
 import { PeopleService } from './people.service';
@@ -26,6 +26,14 @@ export class PeopleController {
     return this.service.createFisica(payload);
   }
 
+  @Put('pf/:id')
+  updateFisica(
+    @Param('id') id: string,
+    @Body(new ZodBody(pessoaFisicaSchema)) payload: PessoaFisicaPayload,
+  ) {
+    return this.service.updateFisica(Number(id), payload);
+  }
+
   @Get('pj')
   listJuridicas() {
     return this.service.listJuridicas();
@@ -36,5 +44,13 @@ export class PeopleController {
     @Body(new ZodBody(pessoaJuridicaSchema)) payload: PessoaJuridicaPayload,
   ) {
     return this.service.createJuridica(payload);
+  }
+
+  @Put('pj/:id')
+  updateJuridica(
+    @Param('id') id: string,
+    @Body(new ZodBody(pessoaJuridicaSchema)) payload: PessoaJuridicaPayload,
+  ) {
+    return this.service.updateJuridica(Number(id), payload);
   }
 }

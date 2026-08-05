@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,9 +13,13 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { pessoaFisicaSchema, type PessoaFisicaPayload } from "@/lib/people-schema";
-import { cadastrarPessoa, type CadastroResultado } from "@/lib/people-client";
-import { maskCpf, maskTelefone } from "@/lib/masks";
+import {
+  pessoaFisicaSchema,
+  type PessoaFisica,
+  type PessoaFisicaPayload,
+} from "@/lib/people-schema";
+import { atualizarPessoa, cadastrarPessoa, type CadastroResultado } from "@/lib/people-client";
+import { maskCep, maskCpf, maskTelefone } from "@/lib/masks";
 import { EnderecoFields } from "./endereco-fields";
 import { FormSection, TextField } from "./form-field";
 
@@ -47,14 +51,41 @@ const valoresIniciais: PfFormValues = {
   uf: "",
 };
 
+function pfToFormValues(pessoa: PessoaFisica): PfFormValues {
+  return {
+    nome: pessoa.nome,
+    cpf: maskCpf(pessoa.cpf),
+    email: pessoa.email ?? "",
+    telefone: pessoa.telefone ? maskTelefone(pessoa.telefone) : "",
+    cep: pessoa.cep ? maskCep(pessoa.cep) : "",
+    logradouro: pessoa.logradouro ?? "",
+    numero: pessoa.numero ?? "",
+    complemento: pessoa.complemento ?? "",
+    bairro: pessoa.bairro ?? "",
+    cidade: pessoa.cidade ?? "",
+    uf: pessoa.uf ?? "",
+  };
+}
+
+export interface PessoaFisicaFormProps {
+  pessoa?: PessoaFisica;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
 /**
  * O formulário valida com o MESMO schema zod do BFF (people-schema.ts
  * espelhado). Um 400/409 do servidor volta como { fieldErrors } e cai no campo
  * de origem via setError — a mensagem que o back recusou é a que o campo mostra.
  */
-export function PessoaFisicaForm() {
+export function PessoaFisicaForm({ pessoa, open: controlledOpen, onOpenChange }: PessoaFisicaFormProps = {}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (onOpenChange ?? (() => {})) : setInternalOpen;
+  const isEdit = pessoa != null;
+  const refreshPendente = useRef(false);
 
   const form = useForm<PfFormValues, unknown, PessoaFisicaPayload>({
     // o schema transforma (tira máscara), então o tipo de entrada é o do form
@@ -74,6 +105,11 @@ export function PessoaFisicaForm() {
     formState: { errors, isSubmitting },
   } = form;
 
+  useEffect(() => {
+    if (!open) return;
+    reset(isEdit && pessoa ? pfToFormValues(pessoa) : valoresIniciais);
+  }, [open, isEdit, pessoa, reset]);
+
   const aplicarErrosDoServidor = (resultado: Extract<CadastroResultado, { ok: false }>) => {
     const campos = Object.entries(resultado.fieldErrors ?? {});
     let mapeado = false;
@@ -89,36 +125,49 @@ export function PessoaFisicaForm() {
   };
 
   const onSubmit = handleSubmit(async (payload) => {
-    const resultado = await cadastrarPessoa("pf", payload);
+    const resultado =
+      isEdit && pessoa
+        ? await atualizarPessoa("pf", pessoa.id, payload)
+        : await cadastrarPessoa("pf", payload);
     if (resultado.ok) {
-      reset();
+      // a lista só repinta depois que o diálogo termina de sair: um refresh no
+      // meio da animação reinicia a saída e o painel pisca de volta na tela
+      refreshPendente.current = true;
       setOpen(false);
-      router.refresh();
       return;
     }
     aplicarErrosDoServidor(resultado);
   });
 
-  const fechar = (proximo: boolean) => {
-    setOpen(proximo);
-    if (!proximo) reset();
-  };
+  // Sem reset no fechamento: quem zera o formulário é o efeito de abertura. Um
+  // reset aqui repintaria os valores anteriores durante a animação de saída.
+  const fechar = (proximo: boolean) => setOpen(proximo);
 
   return (
     <>
-      <Button variant="glass" onClick={() => setOpen(true)}>
-        <UserRoundPlus data-icon="inline-start" />
-        Nova pessoa física
-      </Button>
+      {!isControlled ? (
+        <Button variant="glass" onClick={() => setOpen(true)}>
+          <UserRoundPlus data-icon="inline-start" />
+          Nova pessoa física
+        </Button>
+      ) : null}
 
-      <Dialog open={open} onOpenChange={fechar}>
-        <DialogContent className="glass-deep max-h-[92dvh] overflow-y-auto rounded-xl p-0 sm:max-w-lg">
+      <Dialog
+        open={open}
+        onOpenChange={fechar}
+        onOpenChangeComplete={(aberto) => {
+          if (aberto || !refreshPendente.current) return;
+          refreshPendente.current = false;
+          router.refresh();
+        }}
+      >
+        <DialogContent className="surface-panel surface-frame surface-scan surface-dialog glass-deep max-h-[92dvh] overflow-y-auto rounded-xl p-0 sm:max-w-lg">
           <div className="border-b border-white/10 px-5 py-3.5 pr-12">
             <DialogTitle className="readout text-[13px] font-medium tracking-[0.18em] uppercase">
-              Nova pessoa física
+              {isEdit ? "Editar pessoa física" : "Nova pessoa física"}
             </DialogTitle>
             <DialogDescription className="mt-1 text-xs text-read-soft">
-              Só nome e CPF são obrigatórios. O CEP preenche o endereço sozinho.
+              Nome, CPF, e-mail e telefone são obrigatórios. Endereço pode ser preenchido depois.
             </DialogDescription>
           </div>
 
@@ -142,7 +191,7 @@ export function PessoaFisicaForm() {
                 />
               </div>
 
-              <FormSection label="Contato" optional>
+              <FormSection label="Contato">
                 <div className="grid gap-3 sm:grid-cols-[1fr_11rem]">
                   <TextField
                     label="E-mail"
@@ -180,7 +229,13 @@ export function PessoaFisicaForm() {
                   Cancelar
                 </DialogClose>
                 <Button type="submit" variant="glass" disabled={isSubmitting}>
-                  {isSubmitting ? "Cadastrando…" : "Cadastrar"}
+                  {isSubmitting
+                    ? isEdit
+                      ? "Salvando…"
+                      : "Cadastrando…"
+                    : isEdit
+                      ? "Salvar"
+                      : "Cadastrar"}
                 </Button>
               </div>
             </form>

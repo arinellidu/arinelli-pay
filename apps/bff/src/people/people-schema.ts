@@ -11,9 +11,9 @@ import { z } from "zod";
  * people-schema.sync.spec.ts (BFF) compara os dois arquivos byte a byte e
  * quebra se alguém editar um lado só.
  *
- * Obrigatórios primários: PF = nome + CPF; PJ = CNPJ + nome da empresa +
- * e-mail e telefone de contato + responsável legal (uma PF já cadastrada).
- * Todo o resto — inclusive o endereço preenchido via CEP — é opcional.
+ * Obrigatórios primários: PF = nome + CPF + e-mail + telefone; PJ = CNPJ +
+ * nome da empresa + e-mail e telefone de contato + responsável legal (uma PF já
+ * cadastrada). Endereço — inclusive CEP — pode vir depois.
  */
 
 export const soDigitos = (valor: string): string => valor.replace(/\D/g, "");
@@ -111,8 +111,15 @@ export const pessoaFisicaSchema = z.object({
     .min(3, "Informe o nome completo")
     .max(160, "Máximo de 160 caracteres"),
   cpf: cpfObrigatorio,
-  email: opcional(z.email("E-mail inválido").max(160, "Máximo de 160 caracteres")),
-  telefone: opcional(telefoneTransformado),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Informe o e-mail")
+    .pipe(z.email("E-mail inválido").max(160, "Máximo de 160 caracteres")),
+  telefone: z
+    .string()
+    .min(1, "Informe o telefone")
+    .pipe(telefoneTransformado),
   ...enderecoOpcional,
 });
 

@@ -5,6 +5,7 @@ import br.com.arinelli.pay.billing.clients.DuplicateDocumentException;
 import br.com.arinelli.pay.billing.clients.InvalidDocumentException;
 import br.com.arinelli.pay.billing.contracts.ContractEndedException;
 import br.com.arinelli.pay.billing.contracts.ContractNotFoundException;
+import br.com.arinelli.pay.billing.people.PersonNotFoundException;
 import br.com.arinelli.pay.billing.people.ResponsibleNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -33,7 +34,7 @@ class ApiExceptionHandler {
         return problem;
     }
 
-    @ExceptionHandler({ClientNotFoundException.class, ContractNotFoundException.class})
+    @ExceptionHandler({ClientNotFoundException.class, ContractNotFoundException.class, PersonNotFoundException.class})
     ProblemDetail notFound(RuntimeException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
         problem.setTitle("Recurso não encontrado");

@@ -41,6 +41,17 @@ export class PeopleService {
     }
   }
 
+  async updateFisica(id: number, payload: PessoaFisicaPayload): Promise<unknown> {
+    try {
+      const { data } = await firstValueFrom(
+        this.http.put<unknown>(`/api/billing/people/pf/${id}`, payload),
+      );
+      return data;
+    } catch (e) {
+      this.rethrowForField(e, 'cpf', 'CPF já cadastrado');
+    }
+  }
+
   async listJuridicas(): Promise<unknown> {
     try {
       const { data } = await firstValueFrom(
@@ -56,6 +67,17 @@ export class PeopleService {
     try {
       const { data } = await firstValueFrom(
         this.http.post<unknown>('/api/billing/people/pj', payload),
+      );
+      return data;
+    } catch (e) {
+      this.rethrowForField(e, 'cnpj', 'CNPJ já cadastrado');
+    }
+  }
+
+  async updateJuridica(id: number, payload: PessoaJuridicaPayload): Promise<unknown> {
+    try {
+      const { data } = await firstValueFrom(
+        this.http.put<unknown>(`/api/billing/people/pj/${id}`, payload),
       );
       return data;
     } catch (e) {

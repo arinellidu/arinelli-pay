@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Controller, FormProvider, useForm, type Resolver } from "react-hook-form";
@@ -21,10 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { pessoaJuridicaSchema, type PessoaJuridicaPayload } from "@/lib/people-schema";
-import { cadastrarPessoa, type CadastroResultado } from "@/lib/people-client";
+import { pessoaJuridicaSchema, type PessoaJuridica, type PessoaJuridicaPayload } from "@/lib/people-schema";
+import { atualizarPessoa, cadastrarPessoa, type CadastroResultado } from "@/lib/people-client";
 import { documentMask } from "@/lib/format";
-import { maskCnpj, maskTelefone } from "@/lib/masks";
+import { maskCep, maskCnpj, maskTelefone } from "@/lib/masks";
 import { cn } from "@/lib/utils";
 import { EnderecoFields } from "./endereco-fields";
 import { FieldError, FieldLabel, FormSection, TextField } from "./form-field";
@@ -61,6 +61,31 @@ const valoresIniciais: PjFormValues = {
   uf: "",
 };
 
+function pjToFormValues(empresa: PessoaJuridica): PjFormValues {
+  return {
+    razaoSocial: empresa.razaoSocial,
+    nomeFantasia: empresa.nomeFantasia ?? "",
+    cnpj: maskCnpj(empresa.cnpj),
+    emailContato: empresa.emailContato,
+    telefoneContato: maskTelefone(empresa.telefoneContato),
+    responsavelId: String(empresa.responsavel.id),
+    cep: empresa.cep ? maskCep(empresa.cep) : "",
+    logradouro: empresa.logradouro ?? "",
+    numero: empresa.numero ?? "",
+    complemento: empresa.complemento ?? "",
+    bairro: empresa.bairro ?? "",
+    cidade: empresa.cidade ?? "",
+    uf: empresa.uf ?? "",
+  };
+}
+
+export interface PessoaJuridicaFormProps {
+  responsaveis: ResponsavelOption[];
+  empresa?: PessoaJuridica;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
 export interface ResponsavelOption {
   id: number;
   nome: string;
@@ -74,9 +99,19 @@ export interface ResponsavelOption {
  * espelhado); o 409 de CNPJ repetido e o 422 de responsável inexistente voltam
  * para o campo de origem.
  */
-export function PessoaJuridicaForm({ responsaveis }: { responsaveis: ResponsavelOption[] }) {
+export function PessoaJuridicaForm({
+  responsaveis,
+  empresa,
+  open: controlledOpen,
+  onOpenChange,
+}: PessoaJuridicaFormProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (onOpenChange ?? (() => {})) : setInternalOpen;
+  const isEdit = empresa != null;
+  const refreshPendente = useRef(false);
 
   const form = useForm<PjFormValues, unknown, PessoaJuridicaPayload>({
     resolver: zodResolver(pessoaJuridicaSchema) as unknown as Resolver<
@@ -95,6 +130,11 @@ export function PessoaJuridicaForm({ responsaveis }: { responsaveis: Responsavel
     setError,
     formState: { errors, isSubmitting },
   } = form;
+
+  useEffect(() => {
+    if (!open) return;
+    reset(isEdit && empresa ? pjToFormValues(empresa) : valoresIniciais);
+  }, [open, isEdit, empresa, reset]);
 
   const semResponsaveis = responsaveis.length === 0;
 
@@ -121,33 +161,46 @@ export function PessoaJuridicaForm({ responsaveis }: { responsaveis: Responsavel
   };
 
   const onSubmit = handleSubmit(async (payload) => {
-    const resultado = await cadastrarPessoa("pj", payload);
+    const resultado =
+      isEdit && empresa
+        ? await atualizarPessoa("pj", empresa.id, payload)
+        : await cadastrarPessoa("pj", payload);
     if (resultado.ok) {
-      reset();
+      // a lista só repinta depois que o diálogo termina de sair: um refresh no
+      // meio da animação reinicia a saída e o painel pisca de volta na tela
+      refreshPendente.current = true;
       setOpen(false);
-      router.refresh();
       return;
     }
     aplicarErrosDoServidor(resultado);
   });
 
-  const fechar = (proximo: boolean) => {
-    setOpen(proximo);
-    if (!proximo) reset();
-  };
+  // Sem reset no fechamento: quem zera o formulário é o efeito de abertura. Um
+  // reset aqui repintaria os valores anteriores durante a animação de saída.
+  const fechar = (proximo: boolean) => setOpen(proximo);
 
   return (
     <>
-      <Button variant="glass" onClick={() => setOpen(true)}>
-        <Building2 data-icon="inline-start" />
-        Nova pessoa jurídica
-      </Button>
+      {!isControlled ? (
+        <Button variant="glass" onClick={() => setOpen(true)}>
+          <Building2 data-icon="inline-start" />
+          Nova pessoa jurídica
+        </Button>
+      ) : null}
 
-      <Dialog open={open} onOpenChange={fechar}>
-        <DialogContent className="glass-deep max-h-[92dvh] overflow-y-auto rounded-xl p-0 sm:max-w-lg">
+      <Dialog
+        open={open}
+        onOpenChange={fechar}
+        onOpenChangeComplete={(aberto) => {
+          if (aberto || !refreshPendente.current) return;
+          refreshPendente.current = false;
+          router.refresh();
+        }}
+      >
+        <DialogContent className="surface-panel surface-frame surface-scan surface-dialog glass-deep max-h-[92dvh] overflow-y-auto rounded-xl p-0 sm:max-w-lg">
           <div className="border-b border-white/10 px-5 py-3.5 pr-12">
             <DialogTitle className="readout text-[13px] font-medium tracking-[0.18em] uppercase">
-              Nova pessoa jurídica
+              {isEdit ? "Editar pessoa jurídica" : "Nova pessoa jurídica"}
             </DialogTitle>
             <DialogDescription className="mt-1 text-xs text-read-soft">
               CNPJ, nome da empresa, contato e responsável legal são obrigatórios.
@@ -220,7 +273,7 @@ export function PessoaJuridicaForm({ responsaveis }: { responsaveis: Responsavel
                           >
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent className="glass-deep">
+                          <SelectContent className="surface-panel surface-frame surface-scan glass-deep rounded-lg">
                             {opcoesResponsavel.map((opcao) => (
                               <SelectItem key={opcao.value || "vazio"} value={opcao.value}>
                                 {opcao.label}
@@ -273,7 +326,13 @@ export function PessoaJuridicaForm({ responsaveis }: { responsaveis: Responsavel
                   Cancelar
                 </DialogClose>
                 <Button type="submit" variant="glass" disabled={isSubmitting || semResponsaveis}>
-                  {isSubmitting ? "Cadastrando…" : "Cadastrar"}
+                  {isSubmitting
+                    ? isEdit
+                      ? "Salvando…"
+                      : "Cadastrando…"
+                    : isEdit
+                      ? "Salvar"
+                      : "Cadastrar"}
                 </Button>
               </div>
             </form>

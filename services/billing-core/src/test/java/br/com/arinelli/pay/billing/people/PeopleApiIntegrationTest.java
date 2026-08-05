@@ -10,6 +10,8 @@ import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -60,6 +62,7 @@ class PeopleApiIntegrationTest {
         ResponseEntity<JsonNode> response = rest.postForEntity("/people/pf", Map.of(
                 "nome", "  Ana Souza  ",
                 "cpf", "287.244.093-32",
+                "email", "ana.souza@exemplo.com.br",
                 "telefone", "(31) 98412-0000"), JsonNode.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -78,7 +81,9 @@ class PeopleApiIntegrationTest {
     void postPfComCpfInvalidoRetorna400() {
         ResponseEntity<ProblemDetail> response = rest.postForEntity("/people/pf", Map.of(
                 "nome", "Dígito Errado",
-                "cpf", "28724409333"), ProblemDetail.class);
+                "cpf", "28724409333",
+                "email", "ana@exemplo.com.br",
+                "telefone", "31984120000"), ProblemDetail.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody().getTitle()).isEqualTo("Documento inválido");
@@ -89,7 +94,9 @@ class PeopleApiIntegrationTest {
     void postPfComCpfDoSeedRetorna409() {
         ResponseEntity<ProblemDetail> response = rest.postForEntity("/people/pf", Map.of(
                 "nome", "Helena Clone",
-                "cpf", "52998224725"), ProblemDetail.class);
+                "cpf", "52998224725",
+                "email", "helena.clone@exemplo.com.br",
+                "telefone", "11987650142"), ProblemDetail.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody().getTitle()).isEqualTo("Documento duplicado");
@@ -136,5 +143,22 @@ class PeopleApiIntegrationTest {
                 "responsavelId", 1), ProblemDetail.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @Order(8)
+    void putPfAtualiza200() {
+        ResponseEntity<JsonNode> response = rest.exchange(
+                "/people/pf/1",
+                HttpMethod.PUT,
+                new HttpEntity<>(Map.of(
+                        "nome", "Helena Prado Martins",
+                        "cpf", "52998224725",
+                        "email", "helena.nova@exemplo.com.br",
+                        "telefone", "11987650142")),
+                JsonNode.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().path("email").asString()).isEqualTo("helena.nova@exemplo.com.br");
     }
 }

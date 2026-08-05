@@ -107,4 +107,15 @@ public class LegalPerson {
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
+
+    public void update(String corporateName, String tradeName, String cnpj, String contactEmail,
+                       String contactPhone, NaturalPerson responsible, Address address) {
+        this.corporateName = corporateName;
+        this.tradeName = tradeName;
+        this.cnpj = cnpj;
+        this.contactEmail = contactEmail;
+        this.contactPhone = contactPhone;
+        this.responsible = responsible;
+        this.address = address;
+    }
 }

@@ -45,21 +45,53 @@ describe('telefoneValido', () => {
 });
 
 describe('pessoaFisicaSchema', () => {
-  it('aceita só os obrigatórios primários (nome + CPF), com máscara', () => {
+  it('aceita os obrigatórios primários (nome + CPF + e-mail + telefone), com máscara', () => {
     const parsed = pessoaFisicaSchema.parse({
       nome: '  Ana Souza  ',
       cpf: '529.982.247-25',
-      email: '',
-      telefone: '',
+      email: 'ana.souza@exemplo.com.br',
+      telefone: '(31) 98412-0000',
       cep: '',
     });
     expect(parsed.nome).toBe('Ana Souza');
     expect(parsed.cpf).toBe('52998224725'); // máscara removida na validação
-    expect(parsed.email).toBeUndefined(); // string vazia = não informado
+    expect(parsed.email).toBe('ana.souza@exemplo.com.br');
+    expect(parsed.telefone).toBe('31984120000');
+  });
+
+  it('exige e-mail', () => {
+    const result = pessoaFisicaSchema.safeParse({
+      nome: 'Ana Souza',
+      cpf: '52998224725',
+      email: '',
+      telefone: '31984120000',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => issue.path[0])).toContain('email');
+    }
+  });
+
+  it('exige telefone', () => {
+    const result = pessoaFisicaSchema.safeParse({
+      nome: 'Ana Souza',
+      cpf: '52998224725',
+      email: 'ana@exemplo.com.br',
+      telefone: '',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.map((issue) => issue.path[0])).toContain('telefone');
+    }
   });
 
   it('reprova CPF com dígito errado apontando o campo', () => {
-    const result = pessoaFisicaSchema.safeParse({ nome: 'Ana Souza', cpf: '52998224726' });
+    const result = pessoaFisicaSchema.safeParse({
+      nome: 'Ana Souza',
+      cpf: '52998224726',
+      email: 'ana@exemplo.com.br',
+      telefone: '31984120000',
+    });
     expect(result.success).toBe(false);
     if (!result.success) {
       const campos = result.error.issues.map((issue) => issue.path[0]);
@@ -67,7 +99,7 @@ describe('pessoaFisicaSchema', () => {
     }
   });
 
-  it('valida opcionais quando presentes (e-mail, telefone, CEP, UF)', () => {
+  it('valida opcionais quando presentes (CEP, UF) e formato de e-mail/telefone', () => {
     const result = pessoaFisicaSchema.safeParse({
       nome: 'Ana Souza',
       cpf: '52998224725',

@@ -38,6 +38,34 @@ export async function cadastrarPessoa(
   }
 }
 
+export async function atualizarPessoa(
+  tipo: "pf" | "pj",
+  id: number,
+  payload: unknown,
+): Promise<CadastroResultado> {
+  try {
+    const response = await fetch(`${BFF}/bff/people/${tipo}/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (response.ok) {
+      return { ok: true };
+    }
+    const body = (await response.json().catch(() => null)) as {
+      message?: string;
+      fieldErrors?: CampoErros;
+    } | null;
+    return {
+      ok: false,
+      message: body?.message ?? `Falha ao atualizar (HTTP ${response.status})`,
+      fieldErrors: body?.fieldErrors,
+    };
+  } catch {
+    return { ok: false, message: "Não foi possível consultar o BFF — tente de novo" };
+  }
+}
+
 /** ViaCEP: preenchimento automático do endereço a partir do CEP. */
 export interface CepResultado {
   logradouro: string;
