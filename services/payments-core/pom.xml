@@ -78,7 +78,6 @@
       <!-- P08: sandbox da Efí exige creds; o adapter é testado contra um servidor HTTP real -->
       <groupId>org.wiremock</groupId>
       <artifactId>wiremock-standalone</artifactId>
-      <version>${wiremock.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
