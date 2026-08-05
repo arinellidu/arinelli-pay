@@ -3,11 +3,14 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
   Query,
+  Res,
   UseInterceptors,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ContractsService } from './contracts.service';
 import { CreateContractDto } from './dto/create-contract.dto';
 
@@ -41,8 +44,20 @@ export class ContractsController {
     return this.service.create(dto);
   }
 
+  /**
+   * I1: a chave vem do front e é repassada intacta — o BFF nunca inventa uma.
+   * O status também passa fiel: 201 gerou, 200 é replay da mesma intenção.
+   */
   @Post(':id/invoices\\:generate-next')
-  generateNext(@Param('id') id: string) {
-    return this.service.generateNextInvoice(id);
+  async generateNext(
+    @Param('id') id: string,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+    @Res() res: Response,
+  ) {
+    const { status, body } = await this.service.generateNextInvoice(
+      id,
+      idempotencyKey,
+    );
+    res.status(status).json(body);
   }
 }

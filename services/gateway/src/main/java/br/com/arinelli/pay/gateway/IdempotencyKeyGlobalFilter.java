@@ -14,8 +14,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 /**
- * I1 na borda: mutação em /api/payments/charges sem Idempotency-Key morre no
- * gateway com 400 ProblemDetail, antes de tocar o payments-core.
+ * I1 na borda: mutação que cria dinheiro a receber sem Idempotency-Key morre no
+ * gateway com 400 ProblemDetail, antes de tocar o core.
+ *
+ * Duas rotas hoje: cobrança (/api/payments/charges) e geração de fatura
+ * (/api/billing/contracts/{id}/invoices:generate-next). Cadastro — cliente,
+ * contrato, pessoa — fica de fora: lá o duplicado é barrado por unique de
+ * documento, não por chave de intenção.
  */
 @Component
 public class IdempotencyKeyGlobalFilter implements GlobalFilter, Ordered {
@@ -28,12 +33,16 @@ public class IdempotencyKeyGlobalFilter implements GlobalFilter, Ordered {
             "status":400,"detail":"Idempotency-Key é obrigatório em mutações de pagamento",\
             "instance":"%s"}""";
 
+    private static boolean guarded(String path) {
+        return path.startsWith("/api/payments/charges")
+                || (path.startsWith("/api/billing/contracts/") && path.endsWith("/invoices:generate-next"));
+    }
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         var request = exchange.getRequest();
         String path = request.getPath().value();
-        boolean mutatesCharges = MUTATIONS.contains(request.getMethod())
-                && path.startsWith("/api/payments/charges");
+        boolean mutatesCharges = MUTATIONS.contains(request.getMethod()) && guarded(path);
 
         if (mutatesCharges && !request.getHeaders().containsHeader("Idempotency-Key")) {
             var response = exchange.getResponse();

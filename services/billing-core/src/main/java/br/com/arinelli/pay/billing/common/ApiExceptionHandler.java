@@ -10,6 +10,7 @@ import br.com.arinelli.pay.billing.people.ResponsibleNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -53,6 +54,17 @@ class ApiExceptionHandler {
         // 422, não 404: a rota existe e o corpo está bem formado — o estado do cadastro é que não fecha
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
         problem.setTitle("Responsável legal não encontrado");
+        return problem;
+    }
+
+    /** I1 na borda do serviço: mutação que exige Idempotency-Key sem o header é 400. */
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    ProblemDetail missingHeader(MissingRequestHeaderException ex) {
+        String detail = "Idempotency-Key".equalsIgnoreCase(ex.getHeaderName())
+                ? "Header Idempotency-Key é obrigatório na geração de fatura"
+                : "Header obrigatório ausente: " + ex.getHeaderName();
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, detail);
+        problem.setTitle("Header obrigatório ausente");
         return problem;
     }
 

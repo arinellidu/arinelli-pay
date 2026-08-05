@@ -44,14 +44,24 @@ export class ContractsService {
   }
 
   /** GeraÃ§Ã£o explÃ­cita da prÃ³xima fatura â€” regra vive no core (ADR-003). */
-  async generateNextInvoice(id: string): Promise<unknown> {
+  async generateNextInvoice(
+    id: string,
+    idempotencyKey: string | undefined,
+  ): Promise<{ status: number; body: unknown }> {
     try {
-      const { data } = await firstValueFrom(
+      const response = await firstValueFrom(
         this.http.post<unknown>(
           `/api/billing/contracts/${id}/invoices:generate-next`,
+          undefined,
+          {
+            headers: idempotencyKey
+              ? { 'Idempotency-Key': idempotencyKey }
+              : {},
+          },
         ),
       );
-      return data;
+      // 201 (gerou) ou 200 (replay) exatamente como o core respondeu
+      return { status: response.status, body: response.data };
     } catch (e) {
       rethrowUpstream(e);
     }

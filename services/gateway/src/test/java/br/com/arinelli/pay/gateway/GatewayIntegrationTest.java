@@ -134,6 +134,26 @@ class GatewayIntegrationTest {
     }
 
     @Test
+    void geracaoDeFaturaSemIdempotencyKeyMorreNaBordaCom400() {
+        ResponseEntity<String> response = rest.postForEntity(
+                "/api/billing/contracts/7/invoices:generate-next", null, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("Idempotency-Key é obrigatório");
+        assertThat(lastPath.get("any")).doesNotContain("generate-next");
+    }
+
+    @Test
+    void cadastroDeContratoSegueSemExigirIdempotencyKey() {
+        // I1 é sobre criar dinheiro a receber; cadastro é barrado por unique próprio
+        ResponseEntity<String> response = rest.postForEntity(
+                "/api/billing/contracts", Map.of("clientId", 1, "title", "X"), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK); // backend fake ecoa 200
+        assertThat(lastPath.get("any")).isEqualTo("/contracts");
+    }
+
+    @Test
     void rateLimitEstoura429DepoisDoBurst() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Client-Id", "cliente-rl-test");

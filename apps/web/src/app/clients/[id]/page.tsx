@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -37,7 +38,8 @@ export default async function ClientPage({
   async function generate(formData: FormData) {
     "use server";
     const contractId = Number(formData.get("contractId"));
-    await generateNextInvoice(contractId);
+    // I1: a chave vem do formulário renderizado, uma por contrato listado
+    await generateNextInvoice(contractId, String(formData.get("idempotencyKey")));
     revalidatePath(`/clients/${id}`);
     revalidatePath("/invoices");
   }
@@ -109,6 +111,7 @@ function GenerateButton({
   return (
     <form action={generate}>
       <input type="hidden" name="contractId" value={contract.id} />
+      <input type="hidden" name="idempotencyKey" value={randomUUID()} />
       <SubmitButton label="Gerar próxima fatura" pendingLabel="Gerando…" />
     </form>
   );

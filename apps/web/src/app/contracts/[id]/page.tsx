@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -24,9 +25,14 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
   const contractId = contract.id;
   const clientId = contract.clientId;
 
-  async function generate() {
+  // I1: uma chave por render do formulário. Reenvio do mesmo formulário repete
+  // a chave (o core devolve a fatura original); só um novo render — depois do
+  // revalidate — pede a competência seguinte.
+  const idempotencyKey = randomUUID();
+
+  async function generate(formData: FormData) {
     "use server";
-    await generateNextInvoice(contractId);
+    await generateNextInvoice(contractId, String(formData.get("idempotencyKey")));
     revalidatePath(`/contracts/${contractId}`);
     revalidatePath(`/clients/${clientId}`);
     revalidatePath("/contracts");
@@ -56,6 +62,7 @@ export default async function ContractPage({ params }: { params: Promise<{ id: s
           </div>
           {contract.status === "ACTIVE" ? (
             <form action={generate}>
+              <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
               <SubmitButton label="Gerar próxima fatura" pendingLabel="Gerando…" />
             </form>
           ) : null}

@@ -58,6 +58,8 @@ test("demo: fatura → QR Pix → pagamento simulado → selo PAGA sem reload", 
 
   const invoiceResponse = await request.post(
     `${BFF}/bff/contracts/${contract.id}/invoices:generate-next`,
+    // I1: geração de fatura também exige a chave de intenção
+    { headers: { "Idempotency-Key": `E2E-INV-${stamp}` } },
   );
   expect(invoiceResponse.status()).toBe(201);
   const invoice = (await invoiceResponse.json()) as { id: number };

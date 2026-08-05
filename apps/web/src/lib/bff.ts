@@ -69,10 +69,18 @@ export const bff = {
   pessoasJuridicas: () => get<PessoaJuridica[]>("/bff/people/pj"),
 };
 
-export async function generateNextInvoice(contractId: number): Promise<void> {
+/**
+ * I1: a chave nasce no render do formulário e viaja intacta. Reenvio do mesmo
+ * formulário (clique duplo, retry) repete a chave e o core devolve a fatura
+ * original — 200, não uma segunda cobrança.
+ */
+export async function generateNextInvoice(
+  contractId: number,
+  idempotencyKey: string,
+): Promise<void> {
   const response = await fetch(
     `${BFF_URL}/bff/contracts/${contractId}/invoices:generate-next`,
-    { method: "POST" },
+    { method: "POST", headers: { "Idempotency-Key": idempotencyKey } },
   );
   if (!response.ok) {
     throw new Error(`generate-next respondeu ${response.status}`);

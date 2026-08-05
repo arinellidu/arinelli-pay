@@ -37,6 +37,10 @@ public class Invoice {
     @Column(name = "due_date", nullable = false)
     private LocalDate dueDate;
 
+    /** I1: a intenção que criou esta fatura. Unique no banco (uq_invoices_idem). */
+    @Column(name = "idempotency_key", nullable = false, length = 64)
+    private String idempotencyKey;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private InvoiceStatus status = InvoiceStatus.OPEN;
@@ -50,10 +54,11 @@ public class Invoice {
     protected Invoice() {
     }
 
-    public Invoice(Contract contract, BigDecimal amount, LocalDate dueDate) {
+    public Invoice(Contract contract, BigDecimal amount, LocalDate dueDate, String idempotencyKey) {
         this.contract = contract;
         this.amount = amount;
         this.dueDate = dueDate;
+        this.idempotencyKey = idempotencyKey;
         this.status = InvoiceStatus.OPEN;
     }
 
@@ -78,6 +83,10 @@ public class Invoice {
 
     public LocalDate getDueDate() {
         return dueDate;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
     }
 
     public InvoiceStatus getStatus() {

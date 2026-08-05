@@ -17,13 +17,20 @@ import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.simple.JdbcClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,6 +48,9 @@ class ContractInvoiceApiIntegrationTest {
 
     @Autowired
     private InvoiceService invoiceService;
+
+    @Autowired
+    private JdbcClient jdbc;
 
     @Test
     @Order(1)
@@ -96,11 +106,21 @@ class ContractInvoiceApiIntegrationTest {
         assertThat(response.getBody().getTitle()).isEqualTo("Corpo da requisição inválido");
     }
 
+    /** I1: geração de fatura só existe com Idempotency-Key. */
+    private ResponseEntity<InvoiceResponse> generate(Long contract, String key) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Idempotency-Key", key);
+        return rest.exchange(
+                "/contracts/" + contract + "/invoices:generate-next",
+                HttpMethod.POST,
+                new HttpEntity<>(null, headers),
+                InvoiceResponse.class);
+    }
+
     @Test
     @Order(4)
     void generateNextCriaOpenComVencimentoDaRegra() {
-        ResponseEntity<InvoiceResponse> response = rest.postForEntity(
-                "/contracts/" + contractId + "/invoices:generate-next", null, InvoiceResponse.class);
+        ResponseEntity<InvoiceResponse> response = generate(contractId, "p02-primeira");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         InvoiceResponse invoice = response.getBody();
@@ -117,8 +137,8 @@ class ContractInvoiceApiIntegrationTest {
     void generateNextDeNovoAvancaUmMes() {
         LocalDate first = DueDateRule.nextDueDate(LocalDate.now(), 28, null);
 
-        ResponseEntity<InvoiceResponse> response = rest.postForEntity(
-                "/contracts/" + contractId + "/invoices:generate-next", null, InvoiceResponse.class);
+        // key nova = intenção nova: a competência seguinte
+        ResponseEntity<InvoiceResponse> response = generate(contractId, "p02-segunda");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody().dueDate()).isEqualTo(first.plusMonths(1).withDayOfMonth(28));
@@ -127,8 +147,13 @@ class ContractInvoiceApiIntegrationTest {
     @Test
     @Order(6)
     void generateNextContratoInexistente404() {
-        ResponseEntity<ProblemDetail> response = rest.postForEntity(
-                "/contracts/999999/invoices:generate-next", null, ProblemDetail.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Idempotency-Key", "p02-inexistente");
+        ResponseEntity<ProblemDetail> response = rest.exchange(
+                "/contracts/999999/invoices:generate-next",
+                HttpMethod.POST,
+                new HttpEntity<>(null, headers),
+                ProblemDetail.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
@@ -194,5 +219,70 @@ class ContractInvoiceApiIntegrationTest {
         ResponseEntity<ContractResponse[]> byClient = rest.getForEntity(
                 "/contracts?clientId=" + clientId, ContractResponse[].class);
         assertThat(byClient.getBody()).hasSize(1);
+    }
+
+    @Test
+    @Order(11)
+    void generateNextSemIdempotencyKeyRetorna400() {
+        ResponseEntity<ProblemDetail> response = rest.postForEntity(
+                "/contracts/" + contractId + "/invoices:generate-next", null, ProblemDetail.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getDetail()).contains("Idempotency-Key");
+    }
+
+    @Test
+    @Order(12)
+    void replayDaMesmaKeyDevolveAFaturaOriginal() {
+        ResponseEntity<InvoiceResponse> first = generate(contractId, "p02-replay");
+        assertThat(first.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        ResponseEntity<InvoiceResponse> replay = generate(contractId, "p02-replay");
+
+        // 200, não 201: nada foi criado de novo
+        assertThat(replay.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(replay.getBody().id()).isEqualTo(first.getBody().id());
+        assertThat(replay.getBody().dueDate()).isEqualTo(first.getBody().dueDate());
+
+        Long doContrato = jdbc.sql("select count(*) from invoices where idempotency_key = 'p02-replay'")
+                .query(Long.class).single();
+        assertThat(doContrato).isEqualTo(1);
+    }
+
+    @Test
+    @Order(13)
+    void duasIntencoesConcorrentesNaoDuplicamACompetencia() throws Exception {
+        // keys diferentes, mesma janela: o interleaving decide se as duas caem na
+        // mesma competência ou se a segunda avança um mês. Qualquer um dos dois é
+        // aceitável — o que não pode existir é competência repetida no contrato.
+        var barrier = new CyclicBarrier(2);
+        var pool = Executors.newFixedThreadPool(2);
+        try {
+            var chamadas = List.of(
+                    pool.submit(() -> {
+                        barrier.await();
+                        return generate(contractId, "p02-corrida-a").getStatusCode();
+                    }),
+                    pool.submit(() -> {
+                        barrier.await();
+                        return generate(contractId, "p02-corrida-b").getStatusCode();
+                    }));
+            for (var chamada : chamadas) {
+                assertThat(chamada.get().is2xxSuccessful()).isTrue();
+            }
+        } finally {
+            pool.shutdownNow();
+        }
+
+        Long competenciasDuplicadas = jdbc.sql("""
+                        select count(*) from (
+                          select contract_id, due_date from invoices
+                          where contract_id = ? and status <> 'CANCELED'
+                          group by contract_id, due_date having count(*) > 1
+                        ) duplicadas""")
+                .param(contractId)
+                .query(Long.class)
+                .single();
+        assertThat(competenciasDuplicadas).isZero();
     }
 }
